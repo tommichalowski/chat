@@ -1,16 +1,14 @@
-package com.gft.bench.camel;
+package com.gft.bench.events;
 
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
-
-import com.gft.bench.events.ChatEvent;
 
 /**
  * Created by tzms on 3/25/2016.
  */
 public interface ChatEventListener extends MessageListener {
 
-	ChatEvent listenForEvent() throws JMSException;
+	void listenForEvent() throws JMSException;
 	
     //void onEvent(ChatEvent event) throws JMSException;
 }

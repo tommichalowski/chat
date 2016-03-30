@@ -6,9 +6,9 @@ import org.apache.commons.logging.LogFactory;
 
 import javax.jms.*;
 
-public class ChatClient implements MessageListener {
+public class ChatClientOld implements MessageListener {
 
-    private static final Log log = LogFactory.getLog(ChatClient.class);
+    private static final Log log = LogFactory.getLog(ChatClientOld.class);
     private static final String EXTERNAL_BROKER_URL = "tcp://localhost:61616";
 
     private TopicConnection topicConnection = null;
@@ -16,7 +16,7 @@ public class ChatClient implements MessageListener {
     private TopicPublisher publisher = null;
 
 
-    public ChatClient() {
+    public ChatClientOld() {
 
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(EXTERNAL_BROKER_URL);
 

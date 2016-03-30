@@ -1,8 +1,10 @@
-package com.gft.bench;
+package com.gft.bench.server;
 
 import java.util.Set;
 
 import javax.jms.JMSException;
+
+import com.gft.bench.endpoints.Endpoint;
 
 public interface Server {
 
@@ -14,5 +16,5 @@ public interface Server {
 
     void addRoom(String name);
 
-    void setEndpoint(ChatEndpoint chatEndpoint);	
+    void setEndpoint(Endpoint chatEndpoint);	
 }

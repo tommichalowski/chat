@@ -5,7 +5,7 @@ import org.junit.Before;
 //import static junit.framework.Assert.*;
 import org.junit.Test;
 
-import com.gft.bench.old.ChatClient;
+import com.gft.bench.old.ChatClientOld;
 
 
 /**
@@ -14,7 +14,7 @@ import com.gft.bench.old.ChatClient;
 public class ChatClientTest {
 
 
-	private ChatClient chatClient = null;
+	private ChatClientOld chatClient = null;
 //
 //    //@Mock
 //    private TopicSession publisherSession = Mockito.mock(TopicSession.class);
@@ -25,7 +25,7 @@ public class ChatClientTest {
 	
 	@Before
 	public void setUp() {
-		chatClient = new ChatClient();
+		chatClient = new ChatClientOld();
 	}
 	
 	@Test

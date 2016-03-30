@@ -2,13 +2,15 @@ package com.gft.bench;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.camel.CamelChatClient;
-import com.gft.bench.camel.CamelServer;
-import com.gft.bench.camel.JmsEndpoint;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
+import com.gft.bench.client.ChatClient;
+import com.gft.bench.client.ChatClientImpl;
+import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.endpoints.JmsEndpoint;
+import com.gft.bench.server.ServerImpl;
+import com.gft.bench.server.Server;
 
 public class App {
 
@@ -18,10 +20,10 @@ public class App {
 	
     public static void main(String[] args) {
     	
-		ChatEndpoint chatEndpoint = new JmsEndpoint(BROKER_URL);
+		Endpoint chatEndpoint = new JmsEndpoint(BROKER_URL);
 		
 		if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
-			Server server = new CamelServer();
+			Server server = new ServerImpl();
 			server.setEndpoint(chatEndpoint);
 			try {
 				server.startServer();
@@ -30,14 +32,11 @@ public class App {
 				System.exit(0);
 			}
 		} else {			
-			ChatClientNew chatClient = new CamelChatClient();
+			ChatClient chatClient = new ChatClientImpl();
 
 			try {
 				chatClient.connectToEndpoint(chatEndpoint);
-				List<ResultMsg> oldMessages = chatClient.enterToRoom("games");
-//				for (ResultMsg msg : oldMessages) {
-//					log.info("Message received: " + msg.getMessage());
-//				}
+				chatClient.enterToRoom("games");
 			} catch (JMSException e) {
 				e.printStackTrace();
 			}
