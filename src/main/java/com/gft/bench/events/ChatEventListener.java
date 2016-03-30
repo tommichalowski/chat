@@ -8,7 +8,7 @@ import javax.jms.MessageListener;
  */
 public interface ChatEventListener extends MessageListener {
 
-	void listenForEvent() throws JMSException;
+	void listenForEvents() throws JMSException;
 	
     //void onEvent(ChatEvent event) throws JMSException;
 }

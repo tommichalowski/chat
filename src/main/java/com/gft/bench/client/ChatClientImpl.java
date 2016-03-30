@@ -1,57 +1,44 @@
 package com.gft.bench.client;
 
-import javax.jms.Connection;
-import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.MessageProducer;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.ResultMsg;
 import com.gft.bench.SendResult;
 import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.events.ChatEventImpl;
+import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.EventType;
 
 /**
  * Created by tzms on 3/25/2016.
  */
-public class ChatClientImpl implements ChatClient, MessageListener {
+public class ChatClientImpl implements ChatClient, ChatEventListener {
 	
 	private static final Log log = LogFactory.getLog(ChatClientImpl.class);
 	private static final String EVENT_QUEUE_TO_SERVER = "EVENT.QUEUE.TO.SERVER";
 	private static final String HISTORY_QUEUE_TO_CLIENT = "HISTORY.QUEUE.TO.CLIENT";
 	
-	private ActiveMQConnectionFactory connectionFactory;
-	private Connection connection;
-	private Session session;
-	
-    @Override
-    public void connectToEndpoint(Endpoint endpoint) throws JMSException {
-    	connectionFactory = new ActiveMQConnectionFactory(endpoint.getEndpointUrl());
-    	connection = connectionFactory.createConnection();
-    	connection.start();
-    	session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-    }
+	private Endpoint serverEndpoint;
+
     
     @Override
     public void enterToRoom(String room) throws JMSException {
 
-        Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_SERVER);
-        MessageProducer producer = session.createProducer(serverEventQueue);
-        TextMessage enterRoomMsg = session.createTextMessage("Join me to room: " + room);
-        producer.send(enterRoomMsg);   	
-        
-    	Destination clientHistoryQueue = session.createQueue(HISTORY_QUEUE_TO_CLIENT);
-    	MessageConsumer consumer = session.createConsumer(clientHistoryQueue);
-    	consumer.setMessageListener(this);
+    	ChatEventImpl event = new ChatEventImpl(EventType.ENTER_ROOM, "Join me to room: " + room);
+    	serverEndpoint.sendEvent(event, EVENT_QUEUE_TO_SERVER);
+    	listenForEvents();
     }
     
+	@Override
+	public void listenForEvents() throws JMSException {
+		serverEndpoint.listenForEvent(this, HISTORY_QUEUE_TO_CLIENT);
+	}
+	
 	@Override
 	public void onMessage(Message message) {
 
@@ -80,4 +67,9 @@ public class ChatClientImpl implements ChatClient, MessageListener {
         return null;
     }
 
+	@Override
+	public void setEndpoint(Endpoint serverEndpoint) {
+		this.serverEndpoint = serverEndpoint;
+	}
+	
 }

@@ -20,11 +20,17 @@ public class App {
 	
     public static void main(String[] args) {
     	
-		Endpoint chatEndpoint = new JmsEndpoint(BROKER_URL);
+		Endpoint jmsEndpoint = null;
+		try {
+			jmsEndpoint = new JmsEndpoint(BROKER_URL);
+		} catch (JMSException e) {
+			log.error(e.getMessage());
+			System.exit(0);
+		}
 		
 		if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
 			Server server = new ServerImpl();
-			server.setEndpoint(chatEndpoint);
+			server.setEndpoint(jmsEndpoint);
 			try {
 				server.startServer();
 			} catch (JMSException e) {
@@ -33,19 +39,13 @@ public class App {
 			}
 		} else {			
 			ChatClient chatClient = new ChatClientImpl();
-
+			chatClient.setEndpoint(jmsEndpoint);
 			try {
-				chatClient.connectToEndpoint(chatEndpoint);
 				chatClient.enterToRoom("games");
 			} catch (JMSException e) {
 				e.printStackTrace();
 			}
 		}
-
-		//chatClient.sendMessageToRoom("");
-        //ChatClient chatClient = new ChatClient();
-        //chatClient.runPublisher(TOPIC);
-        //chatClient.runSubscriber(TOPIC);
         
 //        CmdLineTool cmd = new CmdLineTool();
 //

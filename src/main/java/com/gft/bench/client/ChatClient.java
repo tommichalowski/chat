@@ -11,9 +11,13 @@ import com.gft.bench.endpoints.Endpoint;
  */
 public interface ChatClient {
 
-    void connectToEndpoint(Endpoint endpoint) throws JMSException;
     void enterToRoom(String room) throws JMSException;
+    
     ResultMsg exitRoom(String room);
+    
     SendResult sendMessageToRoom(String room);
+    
     ResultMsg receiveMessage(String room);
+    
+    void setEndpoint(Endpoint serverEndpoint);
 }
