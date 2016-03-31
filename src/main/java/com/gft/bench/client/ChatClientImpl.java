@@ -1,15 +1,12 @@
 package com.gft.bench.client;
 
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.ResultMsg;
 import com.gft.bench.SendResult;
 import com.gft.bench.endpoints.Endpoint;
-import com.gft.bench.events.EnterToRoomEvent;
-import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.EventType;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -44,7 +41,12 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     }
 
     @Override
-    public SendResult sendMessageToRoom(String room) {
+    public SendResult sendMessageToRoom(String room, String message) {
+
+        SendMessageEvent event = new SendMessageEvent(EventType.SEND_MESSAGE, room, message);
+        log.info("Sending message from client: " + event.getData());
+        serverEndpoint.sendEvent(event);
+
         return null;
     }
 

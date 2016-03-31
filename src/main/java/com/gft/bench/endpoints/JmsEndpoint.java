@@ -14,6 +14,7 @@ import com.gft.bench.events.ChatEventListener;
  */
 public abstract class JmsEndpoint implements Endpoint, MessageListener {
 
+    protected static final String MESSAGE_QUEUE_TO_SERVER = "";
     protected static final String EVENT_QUEUE_TO_SERVER = "EVENT.QUEUE.TO.SERVER";
     protected static final String EVENT_QUEUE_TO_CLIENT = "EVENT.QUEUE.TO.CLIENT";
     protected static final String ENTER_ROOM_REQUEST = "enter_room_request";

@@ -34,6 +34,8 @@ public class ClientJmsEndpoint extends JmsEndpoint {
             } catch (JMSException e) {
                 e.printStackTrace();
             }
+        } else if (event.getType() == EventType.SEND_MESSAGE) {
+
         }
     }
 
@@ -52,11 +54,9 @@ public class ClientJmsEndpoint extends JmsEndpoint {
     @Override
     public void onMessage(Message message) {
         try {
-            log.info("Client receive some message");
             if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
-                    log.info("Client received enter room history: " + textMsg.getText());
                     EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, textMsg.getText());
                     messageListener.eventReceived(event);
                 }

@@ -15,7 +15,7 @@ public interface ChatClient {
     
     ResultMsg exitRoom(String room);
     
-    SendResult sendMessageToRoom(String room);
+    SendResult sendMessageToRoom(String room, String message);
     
     ResultMsg receiveMessage(String room);
 }

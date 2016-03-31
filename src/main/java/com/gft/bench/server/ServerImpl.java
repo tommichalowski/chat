@@ -22,7 +22,8 @@ public class ServerImpl implements Server, ChatEventListener {
 
     private Endpoint chatEndpoint;
     private Set<String> rooms = new HashSet<String>();
-    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
+    private Map<String, LinkedList> roomsHistory = new TreeMap<String, LinkedList>();
+//    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
 
 
     public ServerImpl(Endpoint chatEndpoint) {
@@ -32,10 +33,11 @@ public class ServerImpl implements Server, ChatEventListener {
 
         //temp
         addRoom("Movies");
-        ArrayList<String> history = roomsHistory.get("Movies");
+        LinkedList<String> history = roomsHistory.get("Movies");
         history.add("Tom: This is first test message!");
         history.add("Jessica: Nice this one is second :)");
         history.add("Tom: fantastic !!!");
+        //history.pollFirst();
     }
 
 
@@ -47,12 +49,8 @@ public class ServerImpl implements Server, ChatEventListener {
             String room = enterToRoomEvent.getRoom();
             addRoom(room);
 
-            ArrayList<String> roomHistory = roomsHistory.get(room);
-            StringBuilder history = new StringBuilder();
-            for (String text : roomHistory) {
-                history.append(text + "\n");
-            }
-            EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, room, history.toString());
+            LinkedList<String> roomHistory = roomsHistory.get(room);
+            EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, room, roomHistory.toString());
             chatEndpoint.sendEvent(eventResponse);
         }
     }
@@ -64,7 +62,7 @@ public class ServerImpl implements Server, ChatEventListener {
     public void stopServer() {  }
 
     @Override
-    public Map<String, ArrayList> getRoomsHistory() {
+    public Map<String, LinkedList> getRoomsHistory() {
         return roomsHistory;
     }
 
@@ -76,7 +74,7 @@ public class ServerImpl implements Server, ChatEventListener {
     @Override
     public void addRoom(String name) {
         if (roomsHistory.containsKey(name) == false) {
-            roomsHistory.put(name, new ArrayList<>());
+            roomsHistory.put(name, new LinkedList<String>());
         }
     }
 

@@ -1,9 +1,6 @@
 package com.gft.bench.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.jms.JMSException;
 
@@ -15,7 +12,7 @@ public interface Server {
 
     void stopServer();
 
-    Map<String, ArrayList> getRoomsHistory();
+    Map<String, LinkedList> getRoomsHistory();
 
 	Set<String> getRooms();
 
