@@ -16,5 +16,5 @@ public interface Server {
 
     void addRoom(String name);
 
-    void setEndpoint(Endpoint chatEndpoint);	
+//    void setEndpoint(Endpoint chatEndpoint);
 }

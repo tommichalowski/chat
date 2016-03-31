@@ -6,9 +6,11 @@ import javax.jms.MessageListener;
 /**
  * Created by tzms on 3/25/2016.
  */
-public interface ChatEventListener extends MessageListener {
+public interface ChatEventListener {
 
-	void listenForEvents() throws JMSException;
+	//void listenForEvents() throws JMSException;
+
+	void eventReceived(ChatEvent event);
 	
     //void onEvent(ChatEvent event) throws JMSException;
 }

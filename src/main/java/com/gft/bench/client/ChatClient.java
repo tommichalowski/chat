@@ -19,5 +19,5 @@ public interface ChatClient {
     
     ResultMsg receiveMessage(String room);
     
-    void setEndpoint(Endpoint serverEndpoint);
+//    void setEndpoint(Endpoint serverEndpoint);
 }

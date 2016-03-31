@@ -2,6 +2,8 @@ package com.gft.bench;
 
 import javax.jms.JMSException;
 
+import com.gft.bench.endpoints.ClientJmsEndpoint;
+import com.gft.bench.endpoints.ServerJmsEndpoint;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -19,28 +21,22 @@ public class App {
 	private static final String SERVER_MODE = "-s";
 	
     public static void main(String[] args) {
-    	
-		Endpoint jmsEndpoint = null;
-		try {
-			jmsEndpoint = new JmsEndpoint(BROKER_URL);
-		} catch (JMSException e) {
-			log.error(e.getMessage());
-			System.exit(0);
-		}
-		
+
 		if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
-			Server server = new ServerImpl();
-			server.setEndpoint(jmsEndpoint);
 			try {
+				Endpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
+				Server server = new ServerImpl(jmsEndpoint);
+//				server.setEndpoint(jmsEndpoint);
 				server.startServer();
 			} catch (JMSException e) {
 				log.error(e.getMessage());
 				System.exit(0);
 			}
-		} else {			
-			ChatClient chatClient = new ChatClientImpl();
-			chatClient.setEndpoint(jmsEndpoint);
+		} else {
 			try {
+				Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
+				ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
+//				chatClient.setEndpoint(jmsEndpoint);
 				chatClient.enterToRoom("games");
 			} catch (JMSException e) {
 				e.printStackTrace();

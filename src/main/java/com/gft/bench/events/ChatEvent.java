@@ -7,5 +7,4 @@ public interface ChatEvent {
 
     EventType getType();
 
-    String getData();
 }
