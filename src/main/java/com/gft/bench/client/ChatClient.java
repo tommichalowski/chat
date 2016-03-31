@@ -18,6 +18,4 @@ public interface ChatClient {
     SendResult sendMessageToRoom(String room);
     
     ResultMsg receiveMessage(String room);
-    
-//    void setEndpoint(Endpoint serverEndpoint);
 }

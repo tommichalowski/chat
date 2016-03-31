@@ -1,11 +1,8 @@
 package com.gft.bench.server;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.TextMessage;
 
 import com.gft.bench.events.ChatEvent;
 import org.apache.commons.logging.Log;
@@ -22,17 +19,23 @@ import com.gft.bench.events.EventType;
 public class ServerImpl implements Server, ChatEventListener {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
-    private static final String EVENT_QUEUE_TO_SERVER = "EVENT.QUEUE.TO.SERVER";
-    private static final String HISTORY_QUEUE_TO_CLIENT = "HISTORY.QUEUE.TO.CLIENT";
-    
+
     private Endpoint chatEndpoint;
     private Set<String> rooms = new HashSet<String>();
+    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
 
 
     public ServerImpl(Endpoint chatEndpoint) {
         this.chatEndpoint = chatEndpoint;
         chatEndpoint.setEventListener(this);
         chatEndpoint.listenForEvent();
+
+        //temp
+        addRoom("Movies");
+        ArrayList<String> history = roomsHistory.get("Movies");
+        history.add("Tom: This is first test message!");
+        history.add("Jessica: Nice this one is second :)");
+        history.add("Tom: fantastic !!!");
     }
 
 
@@ -41,56 +44,40 @@ public class ServerImpl implements Server, ChatEventListener {
 
         if (event.getType() == EventType.ENTER_ROOM) {
             EnterToRoomEvent enterToRoomEvent = (EnterToRoomEvent) event;
-            addRoom(enterToRoomEvent.getRoom());
+            String room = enterToRoomEvent.getRoom();
+            addRoom(room);
 
-            EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, "10 last messages");
+            ArrayList<String> roomHistory = roomsHistory.get(room);
+            StringBuilder history = new StringBuilder();
+            for (String text : roomHistory) {
+                history.append(text + "\n");
+            }
+            EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, room, history.toString());
             chatEndpoint.sendEvent(eventResponse);
         }
     }
     
     @Override
-    public void startServer() throws JMSException {   	
-//    	listenForEvents();
-    }
-    
-//	@Override
-//	public void listenForEvents() throws JMSException {
-		//chatEndpoint.listenForEvent(this);
-//	}
-    
-//	@Override
-//	public void onMessage(Message message) {
-//
-//		if (message instanceof TextMessage) {
-//    		TextMessage textMsg = (TextMessage) message;
-//
-//    		try {
-//				if (textMsg.getText().contains("Join me to room")) {
-//					String room = textMsg.getText().replace("Join me to room: ", "");
-//					addRoom(room);   //event.getData());
-//
-//					EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, "You joined to room: " + room);
-//					chatEndpoint.sendEvent(event, HISTORY_QUEUE_TO_CLIENT);
-//				}
-//			} catch (JMSException e) {
-//				log.error(e.getMessage());
-//			}
-//    	}
-//	}
-    
-    @Override
-    public void stopServer() {
+    public void startServer() throws JMSException {  }
 
+    @Override
+    public void stopServer() {  }
+
+    @Override
+    public Map<String, ArrayList> getRoomsHistory() {
+        return roomsHistory;
     }
 
     @Override
     public Set<String> getRooms() {
-        return rooms;
+        return roomsHistory.keySet();
     }
 
     @Override
     public void addRoom(String name) {
-        rooms.add(name);
+        if (roomsHistory.containsKey(name) == false) {
+            roomsHistory.put(name, new ArrayList<>());
+        }
     }
 
 }

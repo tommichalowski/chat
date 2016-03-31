@@ -26,8 +26,6 @@ public class App {
 			try {
 				Endpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
 				Server server = new ServerImpl(jmsEndpoint);
-//				server.setEndpoint(jmsEndpoint);
-				server.startServer();
 			} catch (JMSException e) {
 				log.error(e.getMessage());
 				System.exit(0);
@@ -36,8 +34,7 @@ public class App {
 			try {
 				Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
 				ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
-//				chatClient.setEndpoint(jmsEndpoint);
-				chatClient.enterToRoom("games");
+				chatClient.enterToRoom("Movies");
 			} catch (JMSException e) {
 				e.printStackTrace();
 			}

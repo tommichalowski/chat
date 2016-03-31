@@ -35,7 +35,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     @Override
     public void eventReceived(ChatEvent event) {
-        log.info("Client reveived message: " + event);
+        log.info("Client reveived message: \n" + event);
     }
 
     @Override
@@ -52,11 +52,5 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public ResultMsg receiveMessage(String room) {
         return null;
     }
-
-//    @Override
-//    public void setEndpoint(Endpoint serverEndpoint) {
-//        this.serverEndpoint = serverEndpoint;
-//        serverEndpoint.setEventListener(this);
-//    }
 
 }
