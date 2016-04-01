@@ -3,6 +3,7 @@ package com.gft.bench.endpoints;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.EnterToRoomEvent;
 import com.gft.bench.events.EventType;
+import com.gft.bench.events.MessageEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -34,8 +35,18 @@ public class ClientJmsEndpoint extends JmsEndpoint {
             } catch (JMSException e) {
                 e.printStackTrace();
             }
-        } else if (event.getType() == EventType.SEND_MESSAGE) {
-
+        } else if (event.getType() == EventType.MESSAGE) {
+            try {
+                Destination destination = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
+                MessageProducer producer = session.createProducer(destination);
+                TextMessage textMsg = session.createTextMessage(((MessageEvent) event).getData());
+                textMsg.setStringProperty(ROOM_NAME, ((MessageEvent) event).getRoom());
+                textMsg.setBooleanProperty(MESSAGE_TO_SERVER, true);
+                log.info("Sending message from client, room: " + textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
+                producer.send(textMsg);
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 

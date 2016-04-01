@@ -4,14 +4,11 @@ import java.util.*;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.Endpoint;
-import com.gft.bench.events.EnterToRoomEvent;
-import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.EventType;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -49,9 +46,15 @@ public class ServerImpl implements Server, ChatEventListener {
             String room = enterToRoomEvent.getRoom();
             addRoom(room);
 
-            LinkedList<String> roomHistory = roomsHistory.get(room);
+            LinkedList<String> roomHistory = getRoomHistory(room);
             EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, room, roomHistory.toString());
             chatEndpoint.sendEvent(eventResponse);
+
+        } else if (event.getType() == EventType.MESSAGE) {
+            MessageEvent messageEvent = (MessageEvent) event;
+            LinkedList<String> roomHistory = getRoomHistory(messageEvent.getRoom());
+            roomHistory.add(messageEvent.getData());
+            log.info("Room history: " + roomHistory);
         }
     }
     
@@ -62,8 +65,8 @@ public class ServerImpl implements Server, ChatEventListener {
     public void stopServer() {  }
 
     @Override
-    public Map<String, LinkedList> getRoomsHistory() {
-        return roomsHistory;
+    public LinkedList getRoomHistory(String room) {
+        return roomsHistory.get(room);
     }
 
     @Override

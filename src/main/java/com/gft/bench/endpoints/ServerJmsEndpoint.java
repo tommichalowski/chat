@@ -3,6 +3,7 @@ package com.gft.bench.endpoints;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.EnterToRoomEvent;
 import com.gft.bench.events.EventType;
+import com.gft.bench.events.MessageEvent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -42,8 +43,13 @@ public class ServerJmsEndpoint extends JmsEndpoint {
     public void listenForEvent() {
         try {
             Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_SERVER);
-            MessageConsumer consumer = session.createConsumer(serverEventQueue);
-            consumer.setMessageListener(this);
+            MessageConsumer eventConsumer = session.createConsumer(serverEventQueue);
+            eventConsumer.setMessageListener(this);
+
+            Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
+            MessageConsumer messageConsumer = session.createConsumer(serverMessageQueue);
+            messageConsumer.setMessageListener(this);
+
             log.info("Server is listening...");
         } catch (JMSException e) {
             e.printStackTrace();
@@ -57,6 +63,12 @@ public class ServerJmsEndpoint extends JmsEndpoint {
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
                     EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, textMsg.getText());
+                    messageListener.eventReceived(event);
+                }
+            } else if (message.getBooleanProperty(MESSAGE_TO_SERVER)) {
+                if (message instanceof TextMessage) {
+                    TextMessage textMsg = (TextMessage) message;
+                    MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getStringProperty(ROOM_NAME), textMsg.getText());
                     messageListener.eventReceived(event);
                 }
             }

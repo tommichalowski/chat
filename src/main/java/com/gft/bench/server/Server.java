@@ -12,7 +12,7 @@ public interface Server {
 
     void stopServer();
 
-    Map<String, LinkedList> getRoomsHistory();
+    LinkedList getRoomHistory(String room);
 
 	Set<String> getRooms();
 

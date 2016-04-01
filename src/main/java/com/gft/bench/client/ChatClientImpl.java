@@ -43,10 +43,8 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     @Override
     public SendResult sendMessageToRoom(String room, String message) {
 
-        SendMessageEvent event = new SendMessageEvent(EventType.SEND_MESSAGE, room, message);
-        log.info("Sending message from client: " + event.getData());
+        MessageEvent event = new MessageEvent(EventType.MESSAGE, room, message);
         serverEndpoint.sendEvent(event);
-
         return null;
     }
 
