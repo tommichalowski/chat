@@ -22,7 +22,7 @@ public class ChatClientTest {
 //
 //    private static final String TEST_TOPIC = "test.topic";
 
-	
+
 	@Before
 	public void setUp() {
 		chatClient = new ChatClientOld();

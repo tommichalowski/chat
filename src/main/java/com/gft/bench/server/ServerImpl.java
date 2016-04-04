@@ -19,7 +19,7 @@ public class ServerImpl implements Server, ChatEventListener {
 
     private Endpoint chatEndpoint;
     private Set<String> rooms = new HashSet<String>();
-    private Map<String, LinkedList> roomsHistory = new TreeMap<String, LinkedList>();
+    private Map<String, LinkedList<String>> roomsHistory = new TreeMap<String, LinkedList<String>>();
 //    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
 
 
@@ -29,11 +29,11 @@ public class ServerImpl implements Server, ChatEventListener {
         chatEndpoint.listenForEvent();
 
         //temp
-        addRoom("Movies");
-        LinkedList<String> history = roomsHistory.get("Movies");
-        history.add("Tom: This is first test message!");
-        history.add("Jessica: Nice this one is second :)");
-        history.add("Tom: fantastic !!!");
+        //addRoom("Movies");
+        //LinkedList<String> history = roomsHistory.get("Movies");
+        //history.add("Tom: This is first test message!");
+        //history.add("Jessica: Nice this one is second :)");
+        //history.add("Tom: fantastic !!!");
         //history.pollFirst();
     }
 
@@ -65,7 +65,7 @@ public class ServerImpl implements Server, ChatEventListener {
     public void stopServer() {  }
 
     @Override
-    public LinkedList getRoomHistory(String room) {
+    public LinkedList<String> getRoomHistory(String room) {
         return roomsHistory.get(room);
     }
 
@@ -76,8 +76,13 @@ public class ServerImpl implements Server, ChatEventListener {
 
     @Override
     public void addRoom(String name) {
-        if (roomsHistory.containsKey(name) == false) {
-            roomsHistory.put(name, new LinkedList<String>());
+        if (roomsHistory.containsKey(name)) {
+            LinkedList<String> roomHistory = roomsHistory.get(name);
+            roomHistory.add(NEW_PERSON_JOINED + name);
+        } else {
+            LinkedList<String> roomHistory = new LinkedList<>();
+            roomHistory.add(NEW_ROOM_CREATED + name);
+            roomsHistory.put(name, roomHistory);
         }
     }
 
