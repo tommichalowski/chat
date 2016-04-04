@@ -13,6 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tzms on 4/4/2016.
@@ -35,7 +37,7 @@ public class ServerImplIT {
     }
 
     @Test
-    public void shouldBeAbleToSendMessage() throws Exception {
+    public void shouldCreateNewRoom() throws Exception {
 
         Endpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
         Server server = new ServerImpl(serverEndpoint);
@@ -46,15 +48,11 @@ public class ServerImplIT {
         String room = "Movies";
         chatClient.enterToRoom(room);
 
-        try {
-            Thread.sleep(9000);                 //1000 milliseconds is one second.
-        } catch(InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
+        TimeUnit.SECONDS.sleep(9);
 
-        LinkedList<String> roomHistory = server.getRoomHistory(room);
+        List<String> roomHistory = server.getRoomHistory(room);
         Assert.assertNotNull("Should have found room: " + room, roomHistory);
         Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
-        Assert.assertEquals("Should have responded with same message", server.NEW_ROOM_CREATED + room, roomHistory.pollFirst());
+        Assert.assertEquals("Should have responded with same message", server.NEW_ROOM_CREATED + room, roomHistory.get(0));
     }
 }
