@@ -1,12 +1,12 @@
 package com.gft.bench.endpoints;
 
-import javax.jms.*;
+import javax.jms.Connection;
+import javax.jms.JMSException;
+import javax.jms.MessageListener;
+import javax.jms.Session;
 
-import com.gft.bench.events.EnterToRoomEvent;
-import com.gft.bench.events.EventType;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 
 /**

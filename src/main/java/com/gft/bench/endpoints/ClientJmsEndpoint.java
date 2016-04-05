@@ -55,7 +55,7 @@ public class ClientJmsEndpoint extends JmsEndpoint {
         try {
             Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_CLIENT);
             MessageConsumer consumer = session.createConsumer(serverEventQueue);
-            consumer.setMessageListener(this);
+            consumer.setMessageListener(this);  //receive();
             log.info("Client is listening...");
         } catch (JMSException e) {
             e.printStackTrace();

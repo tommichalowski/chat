@@ -1,6 +1,9 @@
 package com.gft.bench.client;
 
 import com.gft.bench.events.*;
+
+import java.util.UUID;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,13 +30,35 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public void enterToRoom(String room){
         EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, room);
         log.info("Enter to room from client: " + event.toString());
+        //lock
+        roomEntered = false;
+        
         serverEndpoint.sendEvent(event);
     }
 
     @Override
     public void eventReceived(ChatEvent event) {
         log.info("Client reveived message: \n" + event);
+        
+        roomEntered = true;
     }
+    
+    private Boolean roomEntered = false;
+    
+    public boolean IsLastEnterRoomFinished()
+    {
+    	
+    	return roomEntered;
+    }
+    
+    
+    
+//    public void waitForRequestEnded(UUID requestId)
+//    {
+//    	finishedRequest.add(requestId)
+//    }
+    
+    
 
     @Override
     public ResultMsg exitRoom(String room) {

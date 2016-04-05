@@ -1,14 +1,21 @@
 package com.gft.bench.server;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.events.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.EnterToRoomEvent;
+import com.gft.bench.events.EventType;
+import com.gft.bench.events.MessageEvent;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -18,7 +25,6 @@ public class ServerImpl implements Server, ChatEventListener {
     private static final Log log = LogFactory.getLog(ServerImpl.class);
 
     private Endpoint chatEndpoint;
-    private Set<String> rooms = new HashSet<String>();
     private Map<String, LinkedList<String>> roomsHistory = new TreeMap<String, LinkedList<String>>();
 //    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
 
@@ -41,9 +47,13 @@ public class ServerImpl implements Server, ChatEventListener {
     @Override
     public void eventReceived(ChatEvent event) {
 
+    	
+    	System.out.println("eventReceived thread: " + Thread.currentThread().getId());
+    	
         if (event.getType() == EventType.ENTER_ROOM) {
             EnterToRoomEvent enterToRoomEvent = (EnterToRoomEvent) event;
             String room = enterToRoomEvent.getRoom();
+            room = "failure test";
             addRoom(room);
 
             LinkedList<String> roomHistory = getRoomHistory(room);

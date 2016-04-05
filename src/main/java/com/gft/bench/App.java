@@ -2,18 +2,17 @@ package com.gft.bench;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.endpoints.ClientJmsEndpoint;
-import com.gft.bench.endpoints.ServerJmsEndpoint;
-import com.gft.bench.old.CmdLineTool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
+import com.gft.bench.endpoints.ClientJmsEndpoint;
 import com.gft.bench.endpoints.Endpoint;
-import com.gft.bench.endpoints.JmsEndpoint;
-import com.gft.bench.server.ServerImpl;
+import com.gft.bench.endpoints.ServerJmsEndpoint;
+import com.gft.bench.old.CmdLineTool;
 import com.gft.bench.server.Server;
+import com.gft.bench.server.ServerImpl;
 
 public class App {
 
@@ -36,6 +35,7 @@ public class App {
                 Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
                 ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
                 chatClient.enterToRoom("Movies");
+                
 
                 CmdLineTool cmd = new CmdLineTool();
 

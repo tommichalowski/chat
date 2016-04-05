@@ -1,5 +1,15 @@
 package it.com.gft.bench;
 
+import static com.jayway.awaitility.Awaitility.await;
+
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import org.apache.activemq.broker.BrokerService;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
 import com.gft.bench.endpoints.ClientJmsEndpoint;
@@ -7,14 +17,6 @@ import com.gft.bench.endpoints.Endpoint;
 import com.gft.bench.endpoints.ServerJmsEndpoint;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
-import org.apache.activemq.broker.BrokerService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tzms on 4/4/2016.
@@ -48,11 +50,41 @@ public class ServerImplIT {
         String room = "Movies";
         chatClient.enterToRoom(room);
 
-        TimeUnit.SECONDS.sleep(9);
+        await().until( roomExists(server, room) );
+        //await().until( roomExists2(chatClient) );
+        //TimeUnit.SECONDS.sleep(5);
 
         List<String> roomHistory = server.getRoomHistory(room);
         Assert.assertNotNull("Should have found room: " + room, roomHistory);
         Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
-        Assert.assertEquals("Should have responded with same message", server.NEW_ROOM_CREATED + room, roomHistory.get(0));
+        Assert.assertEquals("Should have responded with same message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
     }
+    
+    
+    private Callable<Boolean> roomExists(Server server, String room) {
+        return new Callable<Boolean>() {
+              public Boolean call() throws Exception {
+            	  return server.getRoomHistory(room) != null;
+              }
+        };
+    }
+    
+//    private Callable<Boolean> roomExists2(ChatClientImpl c) {
+//        return new Callable<Boolean>() {
+//              public Boolean call() throws Exception {
+//            	  return c.IsLastEnterRoomFinished();
+//              }
+//        };  
+//    }
+    
+//    private Callable<Integer> numberOfMessagesInRoom(Server server, String room) {
+//        return new Callable<Integer>() {
+//              public Integer call() throws Exception {
+//            	  if (server.getRoomHistory(room) == null) { 
+//            		  return 0; 
+//            	  }
+//                  return server.getRoomHistory(room).size();
+//              }
+//        };
+//    }
 }

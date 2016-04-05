@@ -4,7 +4,6 @@ import javax.jms.JMSException;
 
 import com.gft.bench.ResultMsg;
 import com.gft.bench.SendResult;
-import com.gft.bench.endpoints.Endpoint;
 
 /**
  * Created by tzms on 3/25/2016.
