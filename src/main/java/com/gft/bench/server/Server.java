@@ -1,12 +1,13 @@
 package com.gft.bench.server;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Set;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.events.ChatEventListener;
 
-public interface Server {
+public interface Server extends ChatEventListener {
 
     public static final String NEW_ROOM_CREATED = "New room has been created: ";
     public static final String NEW_PERSON_JOINED = "New person has joined room: ";

@@ -1,9 +1,5 @@
 package com.gft.bench.endpoints;
 
-import javax.jms.JMSException;
-import javax.jms.MessageListener;
-
-import com.gft.bench.client.ChatClientImpl;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 

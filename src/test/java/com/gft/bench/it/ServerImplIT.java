@@ -51,13 +51,13 @@ public class ServerImplIT {
         chatClient.enterToRoom(room);
 
         await().until( roomExists(server, room) );
-        //await().until( roomExists2(chatClient) );
         //TimeUnit.SECONDS.sleep(5);
-
+        //await().until( roomExists2(chatClient) );
+        
         List<String> roomHistory = server.getRoomHistory(room);
         Assert.assertNotNull("Should have found room: " + room, roomHistory);
         Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
-        Assert.assertEquals("Should have responded with same message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
+        Assert.assertEquals("Should have responded with expected message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
     }
     
     

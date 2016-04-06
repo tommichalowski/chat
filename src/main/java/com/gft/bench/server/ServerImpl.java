@@ -12,15 +12,16 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.Endpoint;
 import com.gft.bench.events.ChatEvent;
-import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomEvent;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 
+
+
 /**
  * Created by tzms on 3/25/2016.
  */
-public class ServerImpl implements Server, ChatEventListener {
+public class ServerImpl implements Server {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
 
