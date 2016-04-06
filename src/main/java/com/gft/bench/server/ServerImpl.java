@@ -47,13 +47,12 @@ public class ServerImpl implements Server, ChatEventListener {
     @Override
     public void eventReceived(ChatEvent event) {
 
-    	
     	System.out.println("eventReceived thread: " + Thread.currentThread().getId());
     	
         if (event.getType() == EventType.ENTER_ROOM) {
             EnterToRoomEvent enterToRoomEvent = (EnterToRoomEvent) event;
             String room = enterToRoomEvent.getRoom();
-            room = "failure test";
+            //room = "failure test";
             addRoom(room);
 
             LinkedList<String> roomHistory = getRoomHistory(room);

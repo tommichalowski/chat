@@ -31,28 +31,24 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
         EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, room);
         log.info("Enter to room from client: " + event.toString());
         //lock
-        roomEntered = false;
-        
+        //roomEntered = false;
         serverEndpoint.sendEvent(event);
     }
 
     @Override
     public void eventReceived(ChatEvent event) {
         log.info("Client reveived message: \n" + event);
-        
-        roomEntered = true;
+//        roomEntered = true;
     }
     
-    private Boolean roomEntered = false;
+//    private Boolean roomEntered = false;
     
-    public boolean IsLastEnterRoomFinished()
-    {
-    	
-    	return roomEntered;
-    }
-    
-    
-    
+//    public boolean IsLastEnterRoomFinished()
+//    {
+//    	return roomEntered;
+//    }
+
+
 //    public void waitForRequestEnded(UUID requestId)
 //    {
 //    	finishedRequest.add(requestId)

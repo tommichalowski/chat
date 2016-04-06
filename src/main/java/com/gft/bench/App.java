@@ -35,7 +35,6 @@ public class App {
                 Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
                 ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
                 chatClient.enterToRoom("Movies");
-                
 
                 CmdLineTool cmd = new CmdLineTool();
 

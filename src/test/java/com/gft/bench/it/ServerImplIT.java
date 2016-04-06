@@ -1,4 +1,4 @@
-package it.com.gft.bench;
+package com.gft.bench.it;
 
 import static com.jayway.awaitility.Awaitility.await;
 
