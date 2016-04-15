@@ -1,9 +1,11 @@
 package com.gft.bench.endpoints;
 
 import com.gft.bench.events.ChatEvent;
-import com.gft.bench.events.EnterToRoomEvent;
+import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
+import com.gft.bench.events.RequestResult;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -29,7 +31,7 @@ public class ServerJmsEndpoint extends JmsEndpoint {
             try {
                 Destination destination = session.createQueue(EVENT_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(((EnterToRoomEvent) event).getData());
+                TextMessage textMsg = session.createTextMessage(((EnterToRoomRequest) event).getData());
                 textMsg.setBooleanProperty(ENTER_ROOM_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
@@ -62,13 +64,14 @@ public class ServerJmsEndpoint extends JmsEndpoint {
             if (message.getBooleanProperty(ENTER_ROOM_REQUEST)) {
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
-                    EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, textMsg.getText());
+                    EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
                     messageListener.eventReceived(event);
                 }
             } else if (message.getBooleanProperty(MESSAGE_TO_SERVER)) {
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
-                    MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getStringProperty(ROOM_NAME), textMsg.getText());
+                    MessageEvent event = new MessageEvent(EventType.MESSAGE, 
+                    		RequestResult.SUCCESS, textMsg.getStringProperty(ROOM_NAME), textMsg.getText());
                     messageListener.eventReceived(event);
                 }
             }

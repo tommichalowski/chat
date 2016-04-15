@@ -8,10 +8,14 @@ import com.gft.bench.events.ChatEventListener;
  */
 public interface Endpoint {
 
-
+//	<TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request);
+	
     void listenForEvent();
     
     void sendEvent(ChatEvent event);
 
     void setEventListener(ChatEventListener messageListener);
 }
+
+//EnterToRoomRequest request = new EnterToRoomRequest();
+//EnterToRoomResponse response = endpoint.request<EnterToRoomRequest, Response>(request);

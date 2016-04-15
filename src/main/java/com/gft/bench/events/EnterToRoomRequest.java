@@ -1,9 +1,6 @@
 package com.gft.bench.events;
 
-/**
- * Created by tzms on 3/31/2016.
- */
-public class MessageEvent implements ChatEvent {
+public class EnterToRoomRequest implements ChatEvent {
 
     private final EventType type;
     private RequestResult result;
@@ -11,13 +8,13 @@ public class MessageEvent implements ChatEvent {
     private final String data;
 
 
-    public MessageEvent(EventType type, String room) {
+    public EnterToRoomRequest(EventType type, String room) {
         this.type = type;
         this.room = room;
         this.data = null;
     }
 
-    public MessageEvent(EventType type, RequestResult result, String room, String data) {
+    public EnterToRoomRequest(EventType type, RequestResult result, String room, String data) {
         this.type = type;
         this.result = result;
         this.room = room;
@@ -30,7 +27,7 @@ public class MessageEvent implements ChatEvent {
         return type;
     }
     
-    @Override
+	@Override
 	public RequestResult getRequestResult() {
 		return result;
 	}
@@ -44,8 +41,7 @@ public class MessageEvent implements ChatEvent {
     
 	@Override
 	public String toString() {
-		return "MessageEvent [type=" + type + ", result=" + result + ", room=" + room + ", data=" + data + "]";
+		return "EnterToRoomRequest [type=" + type + ", result=" + result + ", room=" + room + ", data=" + data + "]";
 	}
 
 }
-

@@ -6,5 +6,5 @@ package com.gft.bench.events;
 public interface ChatEvent {
 
     EventType getType();
-
+    RequestResult getRequestResult();
 }

@@ -34,7 +34,9 @@ public class App {
             try {
                 Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
                 ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
-                chatClient.enterToRoom("Movies");
+                ResultMsg enterToRoomResult = chatClient.enterToRoomRequest("Thread-test");
+                log.info("My thread synchro test: " + enterToRoomResult.getMessage());
+                //chatClient.enterToRoomWithoutConfirmation("Movies");
 
                 CmdLineTool cmd = new CmdLineTool();
 

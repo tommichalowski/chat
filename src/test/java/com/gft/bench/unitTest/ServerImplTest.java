@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import com.gft.bench.endpoints.Endpoint;
 import com.gft.bench.events.ChatEvent;
-import com.gft.bench.events.EnterToRoomEvent;
+import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -25,7 +25,7 @@ public class ServerImplTest {
 	}
 
 	@Test
-	public void testEventReceived() {
+	public void testEnterRoomEventReceived() {
 
 		String roomName = "test-room";
 		Endpoint chatEndpointMock = mock(Endpoint.class);
@@ -33,7 +33,7 @@ public class ServerImplTest {
 		Server server = new ServerImpl(chatEndpointMock);
 		Server serverSpy = spy(server);
 		
-		ChatEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, roomName);
+		ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, roomName);
 		serverSpy.eventReceived(event);
 		
 		verify(serverSpy, times(1)).addRoom(roomName);

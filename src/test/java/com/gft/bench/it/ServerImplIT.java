@@ -48,7 +48,7 @@ public class ServerImplIT {
         ChatClient chatClient = new ChatClientImpl(clientEndpoint);
 
         String room = "Movies";
-        chatClient.enterToRoom(room);
+        chatClient.enterToRoomWithoutConfirmation(room);
 
         await().until( roomExists(server, room) );
         //TimeUnit.SECONDS.sleep(5);

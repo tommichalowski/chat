@@ -10,7 +10,9 @@ import com.gft.bench.SendResult;
  */
 public interface ChatClient {
 
-    void enterToRoom(String room) throws JMSException;
+	ResultMsg enterToRoomRequest(String room);
+	
+    void enterToRoomWithoutConfirmation(String room) throws JMSException;
     
     ResultMsg exitRoom(String room);
     

@@ -12,9 +12,10 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.Endpoint;
 import com.gft.bench.events.ChatEvent;
-import com.gft.bench.events.EnterToRoomEvent;
+import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
+import com.gft.bench.events.RequestResult;
 
 
 
@@ -51,13 +52,14 @@ public class ServerImpl implements Server {
     	System.out.println("eventReceived thread: " + Thread.currentThread().getId());
     	
         if (event.getType() == EventType.ENTER_ROOM) {
-            EnterToRoomEvent enterToRoomEvent = (EnterToRoomEvent) event;
+            EnterToRoomRequest enterToRoomEvent = (EnterToRoomRequest) event;
             String room = enterToRoomEvent.getRoom();
             //room = "failure test";
             addRoom(room);
 
             LinkedList<String> roomHistory = getRoomHistory(room);
-            EnterToRoomEvent eventResponse = new EnterToRoomEvent(EventType.ENTER_ROOM, room, roomHistory.toString());
+            EnterToRoomRequest eventResponse = new EnterToRoomRequest(EventType.ENTER_ROOM, 
+            		RequestResult.SUCCESS, room, roomHistory.toString());
             chatEndpoint.sendEvent(eventResponse);
 
         } else if (event.getType() == EventType.MESSAGE) {

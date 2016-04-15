@@ -1,7 +1,7 @@
 package com.gft.bench.endpoints;
 
 import com.gft.bench.events.ChatEvent;
-import com.gft.bench.events.EnterToRoomEvent;
+import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import org.apache.commons.logging.Log;
@@ -29,7 +29,7 @@ public class ClientJmsEndpoint extends JmsEndpoint {
             try {
                 Destination destination = session.createQueue(EVENT_QUEUE_TO_SERVER);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(((EnterToRoomEvent) event).getRoom());
+                TextMessage textMsg = session.createTextMessage(((EnterToRoomRequest) event).getRoom());
                 textMsg.setBooleanProperty(ENTER_ROOM_REQUEST, true);
                 producer.send(textMsg);
             } catch (JMSException e) {
@@ -68,7 +68,7 @@ public class ClientJmsEndpoint extends JmsEndpoint {
             if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
-                    EnterToRoomEvent event = new EnterToRoomEvent(EventType.ENTER_ROOM, textMsg.getText());
+                    EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
                     messageListener.eventReceived(event);
                 }
             }
