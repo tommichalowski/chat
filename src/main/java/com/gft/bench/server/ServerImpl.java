@@ -10,7 +10,7 @@ import javax.jms.JMSException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
@@ -26,12 +26,12 @@ public class ServerImpl implements Server {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
 
-    private Endpoint chatEndpoint;
+    private ServerEndpoint chatEndpoint;
     private Map<String, LinkedList<String>> roomsHistory = new TreeMap<String, LinkedList<String>>();
 //    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
 
 
-    public ServerImpl(Endpoint chatEndpoint) {
+    public ServerImpl(ServerEndpoint chatEndpoint) {
         this.chatEndpoint = chatEndpoint;
         chatEndpoint.setEventListener(this);
         chatEndpoint.listenForEvent();

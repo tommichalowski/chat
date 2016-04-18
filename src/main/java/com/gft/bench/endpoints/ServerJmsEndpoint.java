@@ -1,26 +1,45 @@
 package com.gft.bench.endpoints;
 
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.jms.*;
-
 /**
  * Created by tzms on 3/31/2016.
  */
-public class ServerJmsEndpoint extends JmsEndpoint {
+public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageListener {
 
     private static final Log log = LogFactory.getLog(ServerJmsEndpoint.class);
+    protected final String brokerUrl;
+    protected ActiveMQConnectionFactory connectionFactory;
+    protected Connection connection;
+    protected Session session;
+    protected ChatEventListener messageListener;
 
-
+    
     public ServerJmsEndpoint(String brokerUrl) throws JMSException {
-        super(brokerUrl);
+        this.brokerUrl = brokerUrl;
+        connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
+        connection = connectionFactory.createConnection();
+        connection.start();
+        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
 
@@ -79,4 +98,11 @@ public class ServerJmsEndpoint extends JmsEndpoint {
             e.printStackTrace();
         }
     }
+    
+    
+    @Override
+    public void setEventListener(ChatEventListener messageListener) {
+        this.messageListener = messageListener;
+    }
+
 }

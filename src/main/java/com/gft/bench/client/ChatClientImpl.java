@@ -1,23 +1,19 @@
 package com.gft.bench.client;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.ResultMsg;
-import com.gft.bench.ResultType;
 import com.gft.bench.SendResult;
-import com.gft.bench.endpoints.Endpoint;
+import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
+import com.gft.bench.events.RequestResult;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -25,39 +21,28 @@ import com.gft.bench.events.EventType;
 public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     private static final Log log = LogFactory.getLog(ChatClientImpl.class);
+    
+    private ClientEndpoint serverEndpoint;
 
-    private Endpoint serverEndpoint;
-
-    public ChatClientImpl(Endpoint serverEndpoint) {
+    public ChatClientImpl(ClientEndpoint serverEndpoint) {
         this.serverEndpoint = serverEndpoint;
         serverEndpoint.setEventListener(this);
-        serverEndpoint.listenForEvent();
+       // serverEndpoint.listenForEvent();
     }
-
     
-	@Override
-	public ResultMsg enterToRoomRequest(String room) {
-		
-		ExecutorService executorService = Executors.newSingleThreadExecutor();
-		Future<Object> future = executorService.submit(new Callable<Object>() {
-			@Override
-			public Object call() throws Exception {
-				log.info("Asynchronous Callable");
-				TimeUnit.SECONDS.sleep(5);
-		        return "Callable Result";
-			}
-		});
-		
+
+    @Override
+    public ResultMsg enterToRoomRequest(String room) {
+    	
+    	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
+    	Future<ResultMsg> future = serverEndpoint.request(event);
+
 		ResultMsg resultMsg = null;
-		
 		try {
-			String result = (String) future.get();
-			resultMsg = new ResultMsg(result, ResultType.NORMAL);
-			//EnterToRoomRequest enterToRoomRequest = (EnterToRoomRequest) future.get();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
+			resultMsg = future.get();
+		} catch (InterruptedException | ExecutionException e) {
+			log.error(e.getStackTrace());
+			return new ResultMsg("Can NOT connect to room!\n", RequestResult.ERROR);
 		}
 
 		return resultMsg;
@@ -74,6 +59,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     @Override
     public void eventReceived(ChatEvent event) {
         log.info("Client reveived message: \n" + event);
+//        try {
+//			responses.put((T) event);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
     }
        
 

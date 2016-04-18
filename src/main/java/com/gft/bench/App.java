@@ -7,10 +7,10 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
+import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.ClientJmsEndpoint;
-import com.gft.bench.endpoints.Endpoint;
 import com.gft.bench.endpoints.ServerJmsEndpoint;
-import com.gft.bench.old.CmdLineTool;
+import com.gft.bench.events.RequestResult;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -23,34 +23,41 @@ public class App {
     public static void main(String[] args) {
 
         if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
-            try {
-                Endpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
-                Server server = new ServerImpl(jmsEndpoint);
+        	Server server = null;
+        	try {
+                ServerJmsEndpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
+                server = new ServerImpl(jmsEndpoint);
             } catch (JMSException e) {
                 log.error(e.getMessage());
-                System.exit(0);
-            }
+            } finally {
+            	if (server != null) { server.stopServer(); }
+            	System.exit(0);
+			}
         } else {
             try {
-                Endpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
+                ClientEndpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
                 ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
+                
                 ResultMsg enterToRoomResult = chatClient.enterToRoomRequest("Thread-test");
-                log.info("My thread synchro test: " + enterToRoomResult.getMessage());
+                log.info("Enter to room result: " + enterToRoomResult.getMessage());
                 //chatClient.enterToRoomWithoutConfirmation("Movies");
-
-                CmdLineTool cmd = new CmdLineTool();
-
-                while (true) {
-                    ResultMsg resultMsg = cmd.readLine();
-
-                    if (ResultType.NORMAL.equals(resultMsg.getResult())) {
-                        chatClient.sendMessageToRoom("Movies", resultMsg.getMessage());
-                    } else if (ResultType.EXIT.equals(resultMsg.getResult())) {
-//                      chatClient.close();
-                        System.exit(0);
-                    }
-
+                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
+                	System.exit(0);
                 }
+                
+              //  CmdLineTool cmd = new CmdLineTool();
+
+              //  while (true) {
+                  //  ResultMsg resultMsg = cmd.readLine();
+
+                   // if (ResultType.NORMAL.equals(resultMsg.getResult())) {
+                    //    chatClient.sendMessageToRoom("Movies", resultMsg.getMessage());
+                   // } else if (ResultType.EXIT.equals(resultMsg.getResult())) {
+//                      chatClient.close();
+                   //     System.exit(0);
+                   // }
+
+              //  }
             } catch (JMSException e) {
                 e.printStackTrace();
             }

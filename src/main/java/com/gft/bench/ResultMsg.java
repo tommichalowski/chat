@@ -1,13 +1,15 @@
 package com.gft.bench;
 
+import com.gft.bench.events.RequestResult;
+
 public class ResultMsg {
 
 	private String message;
-	private ResultType result;
+	private RequestResult result;
 	
 	public ResultMsg() { }
 	
-	public ResultMsg(String message, ResultType resultType) {
+	public ResultMsg(String message, RequestResult resultType) {
 		this.message = message;
 		this.result = resultType;
 	}
@@ -18,10 +20,10 @@ public class ResultMsg {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public ResultType getResult() {
+	public RequestResult getResult() {
 		return result;
 	}
-	public void setResult(ResultType result) {
+	public void setResult(RequestResult result) {
 		this.result = result;
 	}
 }

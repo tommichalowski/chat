@@ -21,6 +21,4 @@ public interface Server extends ChatEventListener {
 	Set<String> getRooms();
 
     void addRoom(String name);
-
-//    void setEndpoint(Endpoint chatEndpoint);
 }
