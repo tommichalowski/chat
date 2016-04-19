@@ -4,9 +4,9 @@ import java.util.concurrent.Future;
 
 import javax.jms.Message;
 
-import com.gft.bench.ResultMsg;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.ResultMsg;
 import com.gft.bench.exceptions.RequestException;
 
 /**

@@ -2,8 +2,7 @@ package com.gft.bench.client;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.ResultMsg;
-import com.gft.bench.SendResult;
+import com.gft.bench.events.ResultMsg;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -16,7 +15,7 @@ public interface ChatClient {
     
     ResultMsg exitRoom(String room);
     
-    SendResult sendMessageToRoom(String room, String message);
+    void sendMessageToRoom(String room, String message);
     
     ResultMsg receiveMessage(String room);
 }

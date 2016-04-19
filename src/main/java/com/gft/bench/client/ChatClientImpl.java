@@ -6,14 +6,15 @@ import java.util.concurrent.Future;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gft.bench.ResultMsg;
-import com.gft.bench.SendResult;
 import com.gft.bench.endpoints.ClientEndpoint;
+import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.ResultMsg;
+import com.gft.bench.exceptions.ChatException;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -21,13 +22,19 @@ import com.gft.bench.events.RequestResult;
 public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     private static final Log log = LogFactory.getLog(ChatClientImpl.class);
+    private static final String BROKER_URL = "tcp://localhost:61616";
     
-    private ClientEndpoint serverEndpoint;
+    private ClientEndpoint clientEndpoint;
 
-    public ChatClientImpl(ClientEndpoint serverEndpoint) {
-        this.serverEndpoint = serverEndpoint;
-        serverEndpoint.setEventListener(this);
-       // serverEndpoint.listenForEvent();
+    
+    public ChatClientImpl() throws ChatException {
+    	this(ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL));
+    }
+    
+    public ChatClientImpl(ClientEndpoint endpoint) {
+		this.clientEndpoint = endpoint; 
+		clientEndpoint.setEventListener(this);
+	       // clientEndpoint.listenForEvent(); 
     }
     
 
@@ -35,7 +42,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public ResultMsg enterToRoomRequest(String room) {
     	
     	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
-    	Future<ResultMsg> future = serverEndpoint.request(event);
+    	Future<ResultMsg> future = clientEndpoint.request(event);
 
 		ResultMsg resultMsg = null;
 		try {
@@ -53,7 +60,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public void enterToRoomWithoutConfirmation(String room){
         EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
         log.info("Enter to room from client: " + event.toString());
-        serverEndpoint.sendEvent(event);
+        clientEndpoint.sendEvent(event);
     }
 
     @Override
@@ -73,11 +80,10 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     }
 
     @Override
-    public SendResult sendMessageToRoom(String room, String message) {
+    public void sendMessageToRoom(String room, String message) {
 
         //MessageEvent event = new MessageEvent(EventType.MESSAGE, room, message);
-        //serverEndpoint.sendEvent(event);
-        return null;
+        //clientEndpoint.sendEvent(event);
     }
 
     @Override

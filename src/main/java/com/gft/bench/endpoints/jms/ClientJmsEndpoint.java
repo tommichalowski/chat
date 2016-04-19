@@ -1,4 +1,4 @@
-package com.gft.bench.endpoints;
+package com.gft.bench.endpoints.jms;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -21,13 +21,15 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gft.bench.ResultMsg;
+import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.ResultMsg;
+import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.exceptions.RequestException;
 
 /**
@@ -46,12 +48,16 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     protected ChatEventListener messageListener;
 
     
-    public ClientJmsEndpoint(String brokerUrl) throws JMSException {
+    public ClientJmsEndpoint(String brokerUrl) throws ChatException {
         this.brokerUrl = brokerUrl;
         connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        connection = connectionFactory.createConnection();
-        connection.start();
-        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        try {
+			connection = connectionFactory.createConnection();
+			connection.start();
+	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		} catch (JMSException e) {
+			throw new ChatException("Can NOT create JMS connection!", e);
+		}
     }
 
     

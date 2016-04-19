@@ -12,9 +12,12 @@ import org.junit.Test;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
-import com.gft.bench.endpoints.ClientJmsEndpoint;
+import com.gft.bench.client.ClientEnpointFactory;
 import com.gft.bench.endpoints.ClientEndpoint;
-import com.gft.bench.endpoints.ServerJmsEndpoint;
+import com.gft.bench.endpoints.ServerEndpoint;
+import com.gft.bench.endpoints.TransportLayer;
+import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
+import com.gft.bench.events.ResultMsg;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -38,27 +41,26 @@ public class ServerImplIT {
         }
     }
 
-//    @Test
-//    public void shouldCreateNewRoom() throws Exception {
-//
-//        Endpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-//        Server server = new ServerImpl(serverEndpoint);
-//
-//        Endpoint clientEndpoint = new ClientJmsEndpoint(BROKER_URL);
-//        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
-//
-//        String room = "Movie
-//        chatClient.enterToRoomWithoutConfirmation(room);
-//
-//        await().until( roomExists(server, room) );
-//        //TimeUnit.SECONDS.sleep(5);
-//        //await().until( roomExists2(chatClient) );
-//        
-//        List<String> roomHistory = server.getRoomHistory(room);
-//        Assert.assertNotNull("Should have found room: " + room, roomHistory);
-//        Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
-//        Assert.assertEquals("Should have responded with expected message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
-//    }
+    @Test
+    public void shouldCreateNewRoom() throws Exception {
+
+        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+        Server server = new ServerImpl(serverEndpoint);
+        
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+
+        String room = "Movie";
+        ResultMsg enterToRoomResult = chatClient.enterToRoomRequest(room);
+        //chatClient.enterToRoomWithoutConfirmation(room);
+
+        await().until( roomExists(server, room) );
+        
+        List<String> roomHistory = server.getRoomHistory(room);
+        Assert.assertNotNull("Should have found room: " + room, roomHistory);
+        Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
+        Assert.assertEquals("Should have responded with expected message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
+    }
     
     
     private Callable<Boolean> roomExists(Server server, String room) {

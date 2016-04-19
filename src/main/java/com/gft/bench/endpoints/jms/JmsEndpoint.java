@@ -1,4 +1,4 @@
-package com.gft.bench.endpoints;
+package com.gft.bench.endpoints.jms;
 
 /**
  * Created by tzms on 3/25/2016.

@@ -7,19 +7,19 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
-import com.gft.bench.endpoints.ClientEndpoint;
-import com.gft.bench.endpoints.ClientJmsEndpoint;
-import com.gft.bench.endpoints.ServerJmsEndpoint;
+import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.ResultMsg;
+import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
 public class App {
 
     private static final Log log = LogFactory.getLog(App.class);
-    private static final String BROKER_URL = "tcp://localhost:61616";
     private static final String SERVER_MODE = "-s";
-
+    private static final String BROKER_URL = "tcp://localhost:61616";
+    
     public static void main(String[] args) {
 
         if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
@@ -35,12 +35,10 @@ public class App {
 			}
         } else {
             try {
-                ClientEndpoint jmsEndpoint = new ClientJmsEndpoint(BROKER_URL);
-                ChatClient chatClient = new ChatClientImpl(jmsEndpoint);
+                ChatClient chatClient = new ChatClientImpl();
+                ResultMsg enterToRoomResult = chatClient.enterToRoomRequest("Movies");
                 
-                ResultMsg enterToRoomResult = chatClient.enterToRoomRequest("Thread-test");
                 log.info("Enter to room result: " + enterToRoomResult.getMessage());
-                //chatClient.enterToRoomWithoutConfirmation("Movies");
                 if (enterToRoomResult.getResult() == RequestResult.ERROR) {
                 	System.exit(0);
                 }
@@ -58,8 +56,9 @@ public class App {
                    // }
 
               //  }
-            } catch (JMSException e) {
-                e.printStackTrace();
+            } catch (ChatException e) {
+                log.error(e.getStackTrace());
+                System.exit(0);
             }
         }
     }

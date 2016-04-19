@@ -1,4 +1,4 @@
-package com.gft.bench.endpoints;
+package com.gft.bench.endpoints.jms;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -14,6 +14,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;

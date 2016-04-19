@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gft.bench.ResultMsg;
+import com.gft.bench.events.ResultMsg;
 
 public class CmdLineTool {
 

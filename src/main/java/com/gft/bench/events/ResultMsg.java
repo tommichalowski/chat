@@ -1,6 +1,4 @@
-package com.gft.bench;
-
-import com.gft.bench.events.RequestResult;
+package com.gft.bench.events;
 
 public class ResultMsg {
 
