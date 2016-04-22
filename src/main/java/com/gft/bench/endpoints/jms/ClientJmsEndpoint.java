@@ -71,7 +71,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 				sendEvent(event);
 				Message receivedMessage = receiveMessage(event);
 				ResultMsg resultMsg = processMessage(receivedMessage);
-				//ResultMsg resultMsg = (ResultMsg) getResponseWhenCame();
 		        return resultMsg;
 			}
 		});

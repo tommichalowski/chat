@@ -10,7 +10,7 @@ public class RequestException extends JMSException {
 	private static final long serialVersionUID = 1L;
 	private static final Log log = LogFactory.getLog(RequestException.class);
 	
-	public RequestException(JMSException ex) {
+	public RequestException(Exception ex) {
 		super(ex.getMessage());
 		
 		if (log.isErrorEnabled()) {

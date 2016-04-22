@@ -36,7 +36,7 @@ public class App {
         } else {
             try {
                 ChatClient chatClient = new ChatClientImpl();
-                ResultMsg enterToRoomResult = chatClient.enterToRoomRequest("Movies");
+                ResultMsg enterToRoomResult = chatClient.enterToRoom("Movies");
                 
                 log.info("Enter to room result: " + enterToRoomResult.getMessage());
                 if (enterToRoomResult.getResult() == RequestResult.ERROR) {

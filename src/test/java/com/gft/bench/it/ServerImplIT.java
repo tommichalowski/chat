@@ -1,13 +1,13 @@
 package com.gft.bench.it;
 
-import static com.jayway.awaitility.Awaitility.await;
-
-import java.util.List;
-import java.util.concurrent.Callable;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import org.apache.activemq.broker.BrokerService;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.gft.bench.client.ChatClient;
@@ -17,6 +17,7 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
+import com.gft.bench.events.RequestResult;
 import com.gft.bench.events.ResultMsg;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -27,49 +28,109 @@ import com.gft.bench.server.ServerImpl;
 public class ServerImplIT {
 
     private static final String BROKER_URL = "tcp://localhost:62617";
-
+    
+    private BrokerService broker = null;
+//    private Server server;
+//    private ChatClient chatClient;
+    
+//    @BeforeClass
+//    public static void runBroker() throws Exception {
+//        startBroker();     
+//    }
+//
+//    @AfterClass
+//    public static void stopBrokerIfRunning() throws Exception {
+//    	if (broker != null && broker.isStarted()) {
+//    		broker.stop();
+//    	}
+//    }
+    
+    
     @Before
-    public void runBroker() {
-        try {
-            BrokerService broker = new BrokerService();
-            broker.setBrokerId("AMQ-BROKER-TEST");
-            broker.setDeleteAllMessagesOnStartup(true);
-            broker.addConnector(BROKER_URL);
-            broker.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void runBroker() throws Exception {
+        startBroker();     
+    }
+
+    @After
+    public void stopBrokerIfRunning() throws Exception {
+    	if (broker != null && broker.isStarted()) {
+    		broker.stop();
+    	}
+    }
+    
+    
+    private void startBroker() throws Exception {
+    	broker = new BrokerService();
+    	broker.setBrokerId("AMQ-BROKER-TEST");
+    	broker.setDeleteAllMessagesOnStartup(true);
+    	broker.addConnector(BROKER_URL);
+    	broker.start();
     }
 
     @Test
-    public void shouldCreateNewRoom() throws Exception {
+    public void enteringToNewRoomShouldResultWithSuccessStatus() throws Exception {
 
         ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-        Server server = new ServerImpl(serverEndpoint);
+        @SuppressWarnings("unused")
+		Server server = new ServerImpl(serverEndpoint);
         
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
         ChatClient chatClient = new ChatClientImpl(clientEndpoint);
 
-        String room = "Movie";
-        ResultMsg enterToRoomResult = chatClient.enterToRoomRequest(room);
-        //chatClient.enterToRoomWithoutConfirmation(room);
+        String room = "Music";
+        ResultMsg enterToRoomResult = chatClient.enterToRoom(room);
 
-        await().until( roomExists(server, room) );
+        Assert.assertEquals("Should respond with create room success request result.",       
+        		            RequestResult.SUCCESS, enterToRoomResult.getResult());
         
-        List<String> roomHistory = server.getRoomHistory(room);
-        Assert.assertNotNull("Should have found room: " + room, roomHistory);
-        Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
-        Assert.assertEquals("Should have responded with expected message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
+        Assert.assertThat("Should have responded with expected message.",
+        		          enterToRoomResult.getMessage(), containsString(Server.NEW_ROOM_CREATED + room));
     }
     
     
-    private Callable<Boolean> roomExists(Server server, String room) {
-        return new Callable<Boolean>() {
-              public Boolean call() throws Exception {
-            	  return server.getRoomHistory(room) != null;
-              }
-        };
+    @Test
+    public void enteringToNewRoomShouldResultWithErrorStatus() throws Exception {
+        
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+
+        String room = "Movies";
+        ResultMsg enterToRoomResult = chatClient.enterToRoom(room);
+
+        Assert.assertEquals("Should respond with create room error request result.",       
+        		            RequestResult.ERROR, enterToRoomResult.getResult());
     }
+    
+    
+    
+//    @Test
+//    public void shouldCreateNewRoomOnServer() throws Exception {
+//
+//        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+//        Server server = new ServerImpl(serverEndpoint);
+//        
+//        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+//        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+//
+//        String room = "Movie";
+//        chatClient.enterToRoomRequest(room);
+//
+//        await().until( roomExists(server, room) );
+//        
+//        List<String> roomHistory = server.getRoomHistory(room);
+//        Assert.assertNotNull("Should have found room: " + room, roomHistory);
+//        Assert.assertTrue("Should contain exactly one message in room: " + room, roomHistory.size() == 1);
+//        Assert.assertEquals("Should have responded with expected message", Server.NEW_ROOM_CREATED + room, roomHistory.get(0));
+//    }
+    
+    
+//    private Callable<Boolean> roomExists(Server server, String room) {
+//        return new Callable<Boolean>() {
+//              public Boolean call() throws Exception {
+//            	  return server.getRoomHistory(room) != null;
+//              }
+//        };
+//    }
     
 //    private Callable<Boolean> roomExists2(ChatClientImpl c) {
 //        return new Callable<Boolean>() {
@@ -89,4 +150,5 @@ public class ServerImplIT {
 //              }
 //        };
 //    }
+    
 }

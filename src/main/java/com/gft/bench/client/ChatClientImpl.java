@@ -2,6 +2,8 @@ package com.gft.bench.client;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,32 +25,45 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     private static final Log log = LogFactory.getLog(ChatClientImpl.class);
     private static final String BROKER_URL = "tcp://localhost:61616";
+    private static final int TIMEOUT = 5; 
     
     private ClientEndpoint clientEndpoint;
-
-    
+  
+    /**
+     * Constructs a new chat client object with default JMS broker.
+     * 
+     * @throws ChatException if it fails to create chat client on default broker 
+     * due to some internal error. 
+     */
     public ChatClientImpl() throws ChatException {
     	this(ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL));
     }
     
+    /**
+     * Constructs a new chat client object with specified ClientEdnpoint.
+     * 
+     * @param   endpoint   the client endpoint. It can be created using client endpoint factory.
+     * It allow to specify transport layer and target URL.
+     */
     public ChatClientImpl(ClientEndpoint endpoint) {
 		this.clientEndpoint = endpoint; 
 		clientEndpoint.setEventListener(this);
-	       // clientEndpoint.listenForEvent(); 
+	    //clientEndpoint.listenForEvent(); 
     }
     
 
     @Override
-    public ResultMsg enterToRoomRequest(String room) {
+    public ResultMsg enterToRoom(String room) {
     	
     	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
     	Future<ResultMsg> future = clientEndpoint.request(event);
 
 		ResultMsg resultMsg = null;
 		try {
-			resultMsg = future.get();
-		} catch (InterruptedException | ExecutionException e) {
-			log.error(e.getStackTrace());
+			resultMsg = future.get(TIMEOUT, TimeUnit.SECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			log.error("Logging exception on enterToRoomRequest: \n" + e.getStackTrace());
+			future.cancel(true);
 			return new ResultMsg("Can NOT connect to room!\n", RequestResult.ERROR);
 		}
 
