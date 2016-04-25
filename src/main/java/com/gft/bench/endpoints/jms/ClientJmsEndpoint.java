@@ -3,9 +3,12 @@ package com.gft.bench.endpoints.jms;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -16,6 +19,7 @@ import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.naming.spi.DirStateFactory.Result;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
@@ -65,15 +69,40 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     public Future<ResultMsg> request(ChatEvent event) { 
     
     	ExecutorService executorService = Executors.newSingleThreadExecutor();
-	    Future<ResultMsg> future = executorService.submit(new Callable<ResultMsg>() {
-			@Override
-			public ResultMsg call() throws RequestException  {
-				sendEvent(event);
-				Message receivedMessage = receiveMessage(event);
-				ResultMsg resultMsg = processMessage(receivedMessage);
-		        return resultMsg;
+    	
+    	CompletableFuture<ResultMsg> future = CompletableFuture.supplyAsync( 
+    			() -> {
+    				try {
+						TimeUnit.SECONDS.sleep(4);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+    				return new ResultMsg("Test msg", RequestResult.SUCCESS);
+    			}, executorService);
+    	
+    	future.thenApply(rm -> {
+    		log.debug("First transformation");
+    		try {
+				TimeUnit.SECONDS.sleep(4);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-		});
+    		return rm.getMessage();
+    	});
+    	
+    	future.thenAccept(result -> log.debug("Result: " + result.getMessage()));
+    	
+    	//if (future.isDone()) {
+    	
+//	    Future<ResultMsg> future = executorService.submit(new Callable<ResultMsg>() {
+//			@Override
+//			public ResultMsg call() throws RequestException  {
+//				sendEvent(event);
+//				Message receivedMessage = receiveMessage(event);
+//				ResultMsg resultMsg = processMessage(receivedMessage);
+//		        return resultMsg;
+//			}
+//		});
 	    
 	    return future;
     }
