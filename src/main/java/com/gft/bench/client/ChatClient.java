@@ -1,5 +1,7 @@
 package com.gft.bench.client;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.jms.JMSException;
 
 import com.gft.bench.events.ResultMsg;
@@ -18,7 +20,9 @@ public interface ChatClient {
      * @return ResultMsg object generated for this request. 
      * Result contains resulting status and message.
      */
-	ResultMsg enterToRoom(String room);
+	//ResultMsg enterToRoom(String room);
+	
+	CompletableFuture<ResultMsg> enterToRoom(String room);
 	
 	
 	

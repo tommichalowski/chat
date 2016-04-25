@@ -2,13 +2,9 @@ package com.gft.bench.endpoints.jms;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -19,11 +15,11 @@ import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.naming.spi.DirStateFactory.Result;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mockito.internal.stubbing.answers.ReturnsElementsOf;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEvent;
@@ -66,34 +62,26 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 
     
     @Override
-    public Future<ResultMsg> request(ChatEvent event) { 
+    public CompletableFuture<ResultMsg> request(ChatEvent event) { 
     
     	ExecutorService executorService = Executors.newSingleThreadExecutor();
     	
     	CompletableFuture<ResultMsg> future = CompletableFuture.supplyAsync( 
     			() -> {
-    				try {
-						TimeUnit.SECONDS.sleep(4);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+    				ResultMsg resultMsg = null;
+    				sendEvent(event);
+					try {
+						Message receivedMessage = receiveMessage(event);
+						resultMsg = processMessage(receivedMessage);
+					} catch (RequestException e) {
+						log.error("\nMessage can NOT be processed: " + e.getStackTrace());
+						resultMsg = new ResultMsg(e.getMessage(), RequestResult.ERROR);
 					}
-    				return new ResultMsg("Test msg", RequestResult.SUCCESS);
+    		        return resultMsg;
     			}, executorService);
     	
-    	future.thenApply(rm -> {
-    		log.debug("First transformation");
-    		try {
-				TimeUnit.SECONDS.sleep(4);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-    		return rm.getMessage();
-    	});
-    	
-    	future.thenAccept(result -> log.debug("Result: " + result.getMessage()));
-    	
-    	//if (future.isDone()) {
-    	
+    	return future;
+    	    	
 //	    Future<ResultMsg> future = executorService.submit(new Callable<ResultMsg>() {
 //			@Override
 //			public ResultMsg call() throws RequestException  {
@@ -103,21 +91,22 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 //		        return resultMsg;
 //			}
 //		});
-	    
-	    return future;
     }
 
     
     @Override
-    public Message receiveMessage(ChatEvent event) throws RequestException {
+    public CompletableFuture<Message> receiveMessage(ChatEvent event) throws RequestException {
     	
+    	CompletableFuture<Message> result = new CompletableFuture<>(); 
     	Message receivedMessage = null;
     	try {
 	    	if (event.getType() == EventType.ENTER_ROOM) {
 				Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_CLIENT);
 			    MessageConsumer consumer = session.createConsumer(serverEventQueue);
-			    receivedMessage = consumer.receive(); 
-			    return receivedMessage;
+			    
+			    consumer.setMessageListener(m -> result.complete(m));
+
+			    return result;
 			}
     	} catch (JMSException e) {
 			throw new RequestException(e);

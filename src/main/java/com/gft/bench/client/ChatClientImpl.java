@@ -1,5 +1,6 @@
 package com.gft.bench.client;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -53,21 +54,30 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     
 
     @Override
-    public ResultMsg enterToRoom(String room) {
+    public CompletableFuture<ResultMsg> enterToRoom(String room) {
     	
     	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
-    	Future<ResultMsg> future = clientEndpoint.request(event);
+    	CompletableFuture<ResultMsg> future = clientEndpoint.request(event);
+    	
+//    	future.thenApplyAsync(rm -> {
+//    		log.debug("Enter to room answer received: " + rm.getMessage());
+//    		return rm.getMessage();
+//    	});
+	
+    	future.thenAccept(result -> log.debug("Result: " + result.getMessage()));
+	
+    	//if (future.isDone()) {
+    	
+//		ResultMsg resultMsg = null;
+//		try {
+//			resultMsg = future.get(TIMEOUT, TimeUnit.SECONDS);
+//		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+//			log.error("Logging exception on enterToRoomRequest: \n" + e.getStackTrace());
+//			future.cancel(true);
+//			return new ResultMsg("Can NOT connect to room!\n", RequestResult.ERROR);
+//		}
 
-		ResultMsg resultMsg = null;
-		try {
-			resultMsg = future.get(TIMEOUT, TimeUnit.SECONDS);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
-			log.error("Logging exception on enterToRoomRequest: \n" + e.getStackTrace());
-			future.cancel(true);
-			return new ResultMsg("Can NOT connect to room!\n", RequestResult.ERROR);
-		}
-
-		return resultMsg;
+		return future;
 	}
 	
 	

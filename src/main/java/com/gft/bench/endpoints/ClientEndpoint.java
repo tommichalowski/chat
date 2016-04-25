@@ -1,6 +1,6 @@
 package com.gft.bench.endpoints;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 import javax.jms.Message;
 
@@ -18,7 +18,7 @@ public interface ClientEndpoint {
     
     void sendEvent(ChatEvent event);
 
-    Future<ResultMsg> request(ChatEvent event);
+    CompletableFuture<ResultMsg> request(ChatEvent event);
     
     Message receiveMessage(ChatEvent event) throws RequestException;
     
