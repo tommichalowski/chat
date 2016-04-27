@@ -2,11 +2,9 @@ package com.gft.bench.endpoints;
 
 import java.util.concurrent.CompletableFuture;
 
-import javax.jms.Message;
-
 import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.ResultMsg;
+import com.gft.bench.events.EventType;
 import com.gft.bench.exceptions.RequestException;
 
 /**
@@ -18,11 +16,9 @@ public interface ClientEndpoint {
     
     void sendEvent(ChatEvent event);
 
-    CompletableFuture<ResultMsg> request(ChatEvent event);
+    CompletableFuture<ChatEvent> request(ChatEvent event);
     
-    Message receiveMessage(ChatEvent event) throws RequestException;
-    
-    ResultMsg getResponseWhenCame() throws InterruptedException;
+    CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException;
     
     void setEventListener(ChatEventListener messageListener);
 }

@@ -6,7 +6,9 @@ package com.gft.bench.endpoints.jms;
 public interface JmsEndpoint {
 
     static final String MESSAGE_QUEUE_TO_SERVER = "MESSAGE.QUEUE.TO.SERVER";
-    static final String MESSAGE_TO_SERVER = "message_to_server";
+    static final String MESSAGE_QUEUE_TO_CLIENT = "MESSAGE.QUEUE.TO.CLIENT";
+    static final String MESSAGE_REQUEST = "message_request";
+    static final String MESSAGE_CONFIRMED = "message_confirmed";
     static final String ROOM_NAME = "room_name";
     static final String EVENT_QUEUE_TO_SERVER = "EVENT.QUEUE.TO.SERVER";
     static final String EVENT_QUEUE_TO_CLIENT = "EVENT.QUEUE.TO.CLIENT";

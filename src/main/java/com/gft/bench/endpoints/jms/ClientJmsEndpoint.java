@@ -1,10 +1,6 @@
 package com.gft.bench.endpoints.jms;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -19,7 +15,6 @@ import javax.jms.TextMessage;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mockito.internal.stubbing.answers.ReturnsElementsOf;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEvent;
@@ -28,7 +23,6 @@ import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
-import com.gft.bench.events.ResultMsg;
 import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.exceptions.RequestException;
 
@@ -40,7 +34,6 @@ import com.gft.bench.exceptions.RequestException;
 public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageListener {
 
 	private static final Log log = LogFactory.getLog(ClientJmsEndpoint.class);
-    private final BlockingQueue<ResultMsg> responses = new ArrayBlockingQueue<ResultMsg>(10);
     protected final String brokerUrl;
     protected ActiveMQConnectionFactory connectionFactory;
     protected Connection connection;
@@ -62,69 +55,59 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 
     
     @Override
-    public CompletableFuture<ResultMsg> request(ChatEvent event) { 
-    
-    	ExecutorService executorService = Executors.newSingleThreadExecutor();
-    	
-    	CompletableFuture<ResultMsg> future = CompletableFuture.supplyAsync( 
-    			() -> {
-    				ResultMsg resultMsg = null;
-    				sendEvent(event);
-					try {
-						Message receivedMessage = receiveMessage(event);
-						resultMsg = processMessage(receivedMessage);
-					} catch (RequestException e) {
-						log.error("\nMessage can NOT be processed: " + e.getStackTrace());
-						resultMsg = new ResultMsg(e.getMessage(), RequestResult.ERROR);
-					}
-    		        return resultMsg;
-    			}, executorService);
-    	
+    public CompletableFuture<ChatEvent> request(ChatEvent event) { 
+        
+    	CompletableFuture<ChatEvent> future = new CompletableFuture<ChatEvent>();
+    	sendEvent(event);
     	return future;
-    	    	
-//	    Future<ResultMsg> future = executorService.submit(new Callable<ResultMsg>() {
-//			@Override
-//			public ResultMsg call() throws RequestException  {
-//				sendEvent(event);
-//				Message receivedMessage = receiveMessage(event);
-//				ResultMsg resultMsg = processMessage(receivedMessage);
-//		        return resultMsg;
-//			}
-//		});
     }
 
     
     @Override
-    public CompletableFuture<Message> receiveMessage(ChatEvent event) throws RequestException {
+    public CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException {
     	
-    	CompletableFuture<Message> result = new CompletableFuture<>(); 
-    	Message receivedMessage = null;
+    	CompletableFuture<ChatEvent> result = new CompletableFuture<ChatEvent>();
+    	
     	try {
-	    	if (event.getType() == EventType.ENTER_ROOM) {
+	    	if (eventType == EventType.ENTER_ROOM) {
 				Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_CLIENT);
 			    MessageConsumer consumer = session.createConsumer(serverEventQueue);
 			    
-			    consumer.setMessageListener(m -> result.complete(m));
-
+			    consumer.setMessageListener(m -> {
+			    	ChatEvent chatEvent = null;
+					try {
+						chatEvent = processMessage(m);
+						result.complete(chatEvent);
+					} catch (RequestException e) {
+						log.error("Reciving message on messageListener error: " + e);
+					}
+			    });
+			    
 			    return result;
 			}
     	} catch (JMSException e) {
 			throw new RequestException(e);
 		}
 		
-    	throw new RequestException("Can NOT receive message for: " + event.getType());
+    	throw new RequestException("Can NOT receive message for: " + eventType);
     }
     
     
-    private ResultMsg processMessage(Message message) throws RequestException {
+    
+    private ChatEvent processMessage(Message message) throws RequestException {
     	
-    	ResultMsg resultMsg = new ResultMsg("Request error", RequestResult.ERROR);
+    	ChatEvent resultMsg = null;
     	
     	try {
 	    	if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
 	            if (message instanceof TextMessage) {
 	                TextMessage textMsg = (TextMessage) message;
-	                resultMsg = new ResultMsg(textMsg.getText(), RequestResult.SUCCESS);
+	                resultMsg = new EnterToRoomRequest(EventType.ENTER_ROOM, "room", textMsg.getText(), RequestResult.SUCCESS);
+	            }
+	    	} else if (message.getBooleanProperty(MESSAGE_CONFIRMED)) {
+	    		if (message instanceof TextMessage) {
+	                TextMessage textMsg = (TextMessage) message;
+	                resultMsg = new EnterToRoomRequest(EventType.MESSAGE, "room", textMsg.getText(), RequestResult.SUCCESS);
 	            }
 	    	}
     	} catch (JMSException e) {
@@ -134,6 +117,46 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     	return resultMsg;
     }
     
+
+    @Override
+    public void listenForEvent() {
+        try {
+            Destination serverEventQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+            MessageConsumer consumer = session.createConsumer(serverEventQueue);
+            consumer.setMessageListener(this);
+            log.info("Client is listening...");
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onMessage(Message message) {
+        try {
+            if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
+                if (message instanceof TextMessage) {
+                    //TextMessage textMsg = (TextMessage) message;
+                    //ResultMsg resultMsg = new ResultMsg(textMsg.getText(), RequestResult.SUCCESS);
+                    //messageListener.eventReceived(event);
+                }
+            } else if (message.getBooleanProperty(MESSAGE_CONFIRMED)) {
+            	if (message instanceof TextMessage) {
+                    TextMessage textMsg = (TextMessage) message;
+                    MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getText(), "room", RequestResult.SUCCESS);
+                    messageListener.eventReceived(event);
+            	}
+            }
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+    @Override
+    public void setEventListener(ChatEventListener messageListener) {
+        this.messageListener = messageListener;
+    }
+        
     
     @Override
     public void sendEvent(ChatEvent event) {
@@ -153,9 +176,9 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
             try {
                 Destination destination = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(((MessageEvent) event).getData());
+                TextMessage textMsg = session.createTextMessage(((MessageEvent) event).getMessage());
                 textMsg.setStringProperty(ROOM_NAME, ((MessageEvent) event).getRoom());
-                textMsg.setBooleanProperty(MESSAGE_TO_SERVER, true);
+                textMsg.setBooleanProperty(MESSAGE_REQUEST, true);
                 log.info("Sending message from client, room: " + textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
                 producer.send(textMsg);
             } catch (JMSException e) {
@@ -163,48 +186,5 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
             }
         }
     }
-
-    @Override
-    public void listenForEvent() {
-        try {
-            Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_CLIENT);
-            MessageConsumer consumer = session.createConsumer(serverEventQueue);
-            consumer.setMessageListener(this);  //receive();
-            log.info("Client is listening...");
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onMessage(Message message) {
-        try {
-            if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
-                if (message instanceof TextMessage) {
-                    TextMessage textMsg = (TextMessage) message;
-                    ResultMsg resultMsg = new ResultMsg(textMsg.getText(), RequestResult.SUCCESS);
-                    //EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
-                    try {
-						responses.put((ResultMsg) resultMsg);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-                    //messageListener.eventReceived(event);
-                }
-            }
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
     
-    @Override
-    public void setEventListener(ChatEventListener messageListener) {
-        this.messageListener = messageListener;
-    }
-    
-    @Override
-    public ResultMsg getResponseWhenCame() throws InterruptedException {
-        return this.responses.take();
-    }
-
 }

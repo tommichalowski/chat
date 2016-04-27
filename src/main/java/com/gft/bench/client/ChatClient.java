@@ -2,8 +2,7 @@ package com.gft.bench.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import javax.jms.JMSException;
-
+import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ResultMsg;
 
 /**
@@ -22,15 +21,9 @@ public interface ChatClient {
      */
 	//ResultMsg enterToRoom(String room);
 	
-	CompletableFuture<ResultMsg> enterToRoom(String room);
-	
-	
-	
-    void enterToRoomWithoutConfirmation(String room) throws JMSException;
+	CompletableFuture<ChatEvent> enterToRoom(String room);
+    
+    CompletableFuture<ChatEvent> sendMessageToRoom(String room, String message);
     
     ResultMsg exitRoom(String room);
-    
-    void sendMessageToRoom(String room, String message);
-    
-    ResultMsg receiveMessage(String room);
 }

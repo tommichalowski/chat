@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.jms.JMSException;
 
@@ -54,19 +55,20 @@ public class ServerImpl implements Server {
         if (event.getType() == EventType.ENTER_ROOM) {
             EnterToRoomRequest enterToRoomEvent = (EnterToRoomRequest) event;
             String room = enterToRoomEvent.getRoom();
-            //room = "failure test";
             addRoom(room);
 
             LinkedList<String> roomHistory = getRoomHistory(room);
-            EnterToRoomRequest eventResponse = new EnterToRoomRequest(EventType.ENTER_ROOM, 
-            		RequestResult.SUCCESS, room, roomHistory.toString());
+            EnterToRoomRequest eventResponse = new EnterToRoomRequest(EventType.ENTER_ROOM, room, roomHistory.toString(),
+            		RequestResult.SUCCESS);
             chatEndpoint.sendEvent(eventResponse);
 
         } else if (event.getType() == EventType.MESSAGE) {
             MessageEvent messageEvent = (MessageEvent) event;
             LinkedList<String> roomHistory = getRoomHistory(messageEvent.getRoom());
-            roomHistory.add(messageEvent.getData());
+            roomHistory.add(messageEvent.getMessage());
             log.info("Room history: " + roomHistory);
+            
+            chatEndpoint.sendEvent(messageEvent);
         }
     }
     
@@ -88,6 +90,13 @@ public class ServerImpl implements Server {
 
     @Override
     public void addRoom(String name) {
+    	
+    	try {
+			TimeUnit.SECONDS.sleep(5);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	
         if (roomsHistory.containsKey(name)) {
             LinkedList<String> roomHistory = roomsHistory.get(name);
             roomHistory.add(NEW_PERSON_JOINED + name);

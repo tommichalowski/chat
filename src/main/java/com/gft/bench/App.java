@@ -1,5 +1,7 @@
 package com.gft.bench;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.jms.JMSException;
 
 import org.apache.commons.logging.Log;
@@ -8,8 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
-import com.gft.bench.events.RequestResult;
-import com.gft.bench.events.ResultMsg;
+import com.gft.bench.events.ChatEvent;
 import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -23,25 +24,34 @@ public class App {
     public static void main(String[] args) {
 
         if (args != null && args.length > 0 && args[0].equals(SERVER_MODE)) {
-        	Server server = null;
         	try {
                 ServerJmsEndpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
-                server = new ServerImpl(jmsEndpoint);
+                @SuppressWarnings("unused")
+				Server server = new ServerImpl(jmsEndpoint);
             } catch (JMSException e) {
                 log.error(e.getMessage());
-            } finally {
-            	if (server != null) { server.stopServer(); }
-            	System.exit(0);
-			}
+            } 
         } else {
             try {
                 ChatClient chatClient = new ChatClientImpl();
-                ResultMsg enterToRoomResult = chatClient.enterToRoom("Movies");
+                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");
                 
-                log.info("Enter to room result: " + enterToRoomResult.getMessage());
-                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
-                	System.exit(0);
-                }
+                enterToRoomFuture.thenApply(result -> {
+                	log.info("Enter to room result: " + result.getMessage());
+                	return result;
+                });
+                
+                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
+                futureMessage.thenApply(result -> {
+                	log.info("Message result: " + result.getMessage());
+                	return result;
+                });
+                
+                log.info("I'm still ready to work!!!\n");
+                
+//                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
+//                	System.exit(0);
+//                }
                 
               //  CmdLineTool cmd = new CmdLineTool();
 

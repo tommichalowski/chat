@@ -3,22 +3,22 @@ package com.gft.bench.events;
 public class EnterToRoomRequest implements ChatEvent {
 
     private final EventType type;
-    private RequestResult result;
     private final String room;
-    private final String data;
+    private final String message;
+    private RequestResult result;
 
 
     public EnterToRoomRequest(EventType type, String room) {
         this.type = type;
         this.room = room;
-        this.data = null;
+        this.message = null;
     }
 
-    public EnterToRoomRequest(EventType type, RequestResult result, String room, String data) {
+    public EnterToRoomRequest(EventType type, String room, String message, RequestResult result) {
         this.type = type;
-        this.result = result;
         this.room = room;
-        this.data = data;
+        this.message = message;
+        this.result = result;
     }
 
 
@@ -26,22 +26,15 @@ public class EnterToRoomRequest implements ChatEvent {
     public EventType getType() {
         return type;
     }
-    
-	@Override
-	public RequestResult getRequestResult() {
-		return result;
-	}
 
     public String getRoom() {
         return room;
     }
 
-    public String getData() { return data; }
+    @Override
+    public String getMessage() { return message; }
 
-    
-	@Override
-	public String toString() {
-		return "EnterToRoomRequest [type=" + type + ", result=" + result + ", room=" + room + ", data=" + data + "]";
+	public RequestResult getRequestResult() {
+		return result;
 	}
-
 }

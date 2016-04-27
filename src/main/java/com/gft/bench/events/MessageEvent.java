@@ -5,46 +5,41 @@ package com.gft.bench.events;
  */
 public class MessageEvent implements ChatEvent {
 
-    private final EventType type;
-    private RequestResult result;
+	private final EventType type;
+	private final String message;
     private final String room;
-    private final String data;
-
-
-    public MessageEvent(EventType type, String room) {
-        this.type = type;
-        this.room = room;
-        this.data = null;
-    }
-
-    public MessageEvent(EventType type, RequestResult result, String room, String data) {
-        this.type = type;
-        this.result = result;
-        this.room = room;
-        this.data = data;
-    }
-
-
-    @Override
-    public EventType getType() {
-        return type;
-    }
+    private RequestResult result;
     
-    @Override
-	public RequestResult getRequestResult() {
-		return result;
+    
+    public MessageEvent(EventType type, String message, String room) {
+		this.type = type;
+		this.message = message;
+		this.room = room;
 	}
-
-    public String getRoom() {
-        return room;
-    }
-
-    public String getData() { return data; }
-
+    
+    public MessageEvent(EventType type, String message, String room, RequestResult result) {
+		this.type = type;
+		this.message = message;
+		this.room = room;
+		this.result = result;
+	}
     
 	@Override
-	public String toString() {
-		return "MessageEvent [type=" + type + ", result=" + result + ", room=" + room + ", data=" + data + "]";
+	public EventType getType() {
+		return type;
+	}
+	
+	@Override
+    public String getMessage() {
+		return message;
+	}
+
+	public String getRoom() {
+		return room;
+	}
+
+	public RequestResult getResult() {
+		return result;
 	}
 
 }

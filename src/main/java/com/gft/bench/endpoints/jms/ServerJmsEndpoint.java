@@ -20,7 +20,6 @@ import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
-import com.gft.bench.events.RequestResult;
 
 /**
  * Created by tzms on 3/31/2016.
@@ -51,8 +50,19 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             try {
                 Destination destination = session.createQueue(EVENT_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(((EnterToRoomRequest) event).getData());
+                TextMessage textMsg = session.createTextMessage(event.getMessage());
                 textMsg.setBooleanProperty(ENTER_ROOM_CONFIRMED, true);
+                log.info("Server responds with message: \n" + textMsg.getText());
+                producer.send(textMsg);
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        } else if (event.getType() == EventType.MESSAGE) {
+            try {
+                Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+                MessageProducer producer = session.createProducer(destination);
+                TextMessage textMsg = session.createTextMessage(event.getMessage());
+                textMsg.setBooleanProperty(MESSAGE_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
             } catch (JMSException e) {
@@ -87,11 +97,11 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                     EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
                     messageListener.eventReceived(event);
                 }
-            } else if (message.getBooleanProperty(MESSAGE_TO_SERVER)) {
+            } else if (message.getBooleanProperty(MESSAGE_REQUEST)) {
                 if (message instanceof TextMessage) {
                     TextMessage textMsg = (TextMessage) message;
-                    MessageEvent event = new MessageEvent(EventType.MESSAGE, 
-                    		RequestResult.SUCCESS, textMsg.getStringProperty(ROOM_NAME), textMsg.getText());
+                    MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getText(), 
+                    		textMsg.getStringProperty(ROOM_NAME));
                     messageListener.eventReceived(event);
                 }
             }
