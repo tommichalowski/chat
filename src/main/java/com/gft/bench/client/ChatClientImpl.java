@@ -50,7 +50,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		clientEndpoint.setEventListener(this);
 	    clientEndpoint.listenForEvent(); 
     }
-    
+
 
     @Override
     public CompletableFuture<ChatEvent> enterToRoom(String room) {
@@ -69,6 +69,16 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	}
     
     
+	@Override
+	public CompletableFuture<ChatEvent> createUser(String userName) {
+		
+		ChatEvent event = new MessageEvent(EventType.CREATE_USER, userName);
+		CompletableFuture<ChatEvent> future = clientEndpoint.request(event);
+        futureMessageMap.put("MessageId", future);
+        return future;
+	}
+	
+    
     @Override
     public CompletableFuture<ChatEvent> sendMessageToRoom(String room, String message) {
 
@@ -78,11 +88,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
         return future;
     }
 	
-	
 
     @Override
     public void eventReceived(ChatEvent event) {
         log.info("Client reveived message: " + event.getMessage());
+        log.info("Client reveived userName: " + event.getUserName());
         CompletableFuture<ChatEvent> completableFuture = futureMessageMap.get("MessageId");
         completableFuture.complete(event);
     }
@@ -92,4 +102,20 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public ResultMsg exitRoom(String room) {
         return null;
     }
+   
+    
+//	private CompletableFuture<ChatEvent> requestResponse(ChatEvent event) {
+//	
+//	clientEndpoint.sendEvent(event);
+//	
+//	CompletableFuture<ChatEvent> future = null;
+//	try {
+//		future = clientEndpoint.receiveEvent(event.getType());		
+//	} catch (RequestException e) {
+//		log.error("Logging exception on enterToRoomRequest:", e);
+//	}
+//
+//	return future;
+//}
+
 }

@@ -68,6 +68,17 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             } catch (JMSException e) {
                 e.printStackTrace();
             }
+        } else if (event.getType() == EventType.CREATE_USER) {
+            try {
+                //Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+                MessageProducer producer = session.createProducer(event.getReplyTo());
+                TextMessage textMsg = session.createTextMessage(event.getUserName());
+                textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
+                log.info("Server responds with message: \n" + textMsg.getText());
+                producer.send(textMsg);
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -102,6 +113,14 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                     TextMessage textMsg = (TextMessage) message;
                     MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getText(), 
                     		textMsg.getStringProperty(ROOM_NAME));
+                    messageListener.eventReceived(event);
+                }
+            } else if (message.getBooleanProperty(CREATE_USER_REQUEST)) {
+                if (message instanceof TextMessage) {
+                    TextMessage textMsg = (TextMessage) message;
+                    log.info("received create user");
+                    MessageEvent event = new MessageEvent(EventType.CREATE_USER, textMsg.getStringProperty(USER_NAME));
+                    event.setReplyTo(textMsg.getJMSReplyTo());
                     messageListener.eventReceived(event);
                 }
             }

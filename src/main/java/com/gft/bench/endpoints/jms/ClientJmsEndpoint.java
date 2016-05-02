@@ -38,6 +38,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     protected ActiveMQConnectionFactory connectionFactory;
     protected Connection connection;
     protected Session session;
+    private Destination clientEventQueue;
     protected ChatEventListener messageListener;
 
     
@@ -121,8 +122,8 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     @Override
     public void listenForEvent() {
         try {
-            Destination serverEventQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-            MessageConsumer consumer = session.createConsumer(serverEventQueue);
+            clientEventQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+            MessageConsumer consumer = session.createConsumer(clientEventQueue);
             consumer.setMessageListener(this);
             log.info("Client is listening...");
         } catch (JMSException e) {
@@ -145,6 +146,12 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
                     MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getText(), "room", RequestResult.SUCCESS);
                     messageListener.eventReceived(event);
             	}
+            } else if (message.getBooleanProperty(CREATE_USER_CONFIRMED)) {
+            	if (message instanceof TextMessage) {
+                    TextMessage textMsg = (TextMessage) message;
+                    MessageEvent event = new MessageEvent(EventType.CREATE_USER, textMsg.getText());
+                    messageListener.eventReceived(event);
+            	}
             }
         } catch (JMSException e) {
             e.printStackTrace();
@@ -161,12 +168,26 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     @Override
     public void sendEvent(ChatEvent event) {
 
-        if (event.getType() == EventType.ENTER_ROOM) {
+        if (event.getType() == EventType.CREATE_USER) {
+        	try {
+                Destination destination = session.createQueue(EVENT_QUEUE_TO_SERVER);
+                MessageProducer producer = session.createProducer(destination);
+                TextMessage textMsg = session.createTextMessage(((MessageEvent) event).getUserName());
+                textMsg.setStringProperty(USER_NAME, ((MessageEvent) event).getUserName());
+                textMsg.setBooleanProperty(CREATE_USER_REQUEST, true);
+                textMsg.setJMSReplyTo(clientEventQueue);
+                log.debug("Sending request to server \n");
+                producer.send(textMsg);
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        } else if (event.getType() == EventType.ENTER_ROOM) {
             try {
                 Destination destination = session.createQueue(EVENT_QUEUE_TO_SERVER);
                 MessageProducer producer = session.createProducer(destination);
                 TextMessage textMsg = session.createTextMessage(((EnterToRoomRequest) event).getRoom());
                 textMsg.setBooleanProperty(ENTER_ROOM_REQUEST, true);
+                textMsg.setJMSReplyTo(clientEventQueue);
                 log.debug("Sending request to server \n");
                 producer.send(textMsg);
             } catch (JMSException e) {

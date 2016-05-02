@@ -50,11 +50,23 @@ public class ServerImpl implements Server {
     @Override
     public void eventReceived(ChatEvent event) {
 
-    	System.out.println("eventReceived thread: " + Thread.currentThread().getId());
+    	log.info("eventReceived thread: " + Thread.currentThread().getId());
+    	log.info("event type: " + event.getType());
     	
-        if (event.getType() == EventType.ENTER_ROOM) {
+    	if (event.getType() == EventType.CREATE_USER) {
+    		MessageEvent messageEvent = (MessageEvent) event;
+    		log.info("\nCreating user: " + messageEvent.getUserName());
+    		try {
+				TimeUnit.SECONDS.sleep(6);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    		chatEndpoint.sendEvent(messageEvent);
+    		
+    	} else if (event.getType() == EventType.ENTER_ROOM) {
             EnterToRoomRequest enterToRoomEvent = (EnterToRoomRequest) event;
             String room = enterToRoomEvent.getRoom();
+            log.info("\nCreating room: " + room);
             addRoom(room);
 
             LinkedList<String> roomHistory = getRoomHistory(room);

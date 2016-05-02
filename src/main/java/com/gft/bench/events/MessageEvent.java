@@ -1,14 +1,23 @@
 package com.gft.bench.events;
 
+import javax.jms.Destination;
+
 /**
  * Created by tzms on 3/31/2016.
  */
 public class MessageEvent implements ChatEvent {
 
 	private final EventType type;
-	private final String message;
-    private final String room;
+	private String message;
+    private String room;
+    private String userName;
+    private Destination replyTo;
     private RequestResult result;
+    
+    public MessageEvent(EventType type, String userName) {
+    	this.type = type;
+    	this.userName = userName;
+    }
     
     
     public MessageEvent(EventType type, String message, String room) {
@@ -37,7 +46,20 @@ public class MessageEvent implements ChatEvent {
 	public String getRoom() {
 		return room;
 	}
+	
+	@Override
+	public String getUserName() {
+		return userName;
+	}
 
+	public Destination getReplyTo() {
+		return replyTo;
+	}
+
+	public void setReplyTo(Destination replyTo) {
+		this.replyTo = replyTo;
+	}
+	
 	public RequestResult getResult() {
 		return result;
 	}

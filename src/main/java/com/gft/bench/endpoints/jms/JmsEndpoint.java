@@ -14,4 +14,7 @@ public interface JmsEndpoint {
     static final String EVENT_QUEUE_TO_CLIENT = "EVENT.QUEUE.TO.CLIENT";
     static final String ENTER_ROOM_REQUEST = "enter_room_request";
     static final String ENTER_ROOM_CONFIRMED = "enter_room_confirmed";
+    static final String CREATE_USER_REQUEST = "create_user_request";
+    static final String CREATE_USER_CONFIRMED = "create_user_confirmed";
+    static final String USER_NAME = "user_name";
 }

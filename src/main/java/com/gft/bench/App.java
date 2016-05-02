@@ -34,20 +34,31 @@ public class App {
         } else {
             try {
                 ChatClient chatClient = new ChatClientImpl();
-                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");
                 
-                enterToRoomFuture.thenApply(result -> {
-                	log.info("Enter to room result: " + result.getMessage());
+                CompletableFuture<ChatEvent> future = chatClient.createUser("Tomasz");
+                
+                future.thenApply(result -> {
+                	log.info("Create user result: " + result.getUserName());
                 	return result;
                 });
-                
-                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
-                futureMessage.thenApply(result -> {
-                	log.info("Message result: " + result.getMessage());
-                	return result;
-                });
+                	
+//                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");
+//                
+//                enterToRoomFuture.thenApply(result -> {
+//                	log.info("Enter to room result: " + result.getMessage());
+//                	return result;
+//                });
+//                
+//                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
+//                futureMessage.thenApply(result -> {
+//                	log.info("Message result: " + result.getMessage());
+//                	return result;
+//                });
                 
                 log.info("I'm still ready to work!!!\n");
+                
+                
+                
                 
 //                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
 //                	System.exit(0);
