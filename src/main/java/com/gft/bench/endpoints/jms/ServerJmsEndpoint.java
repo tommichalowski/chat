@@ -15,12 +15,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ServerEndpoint;
-import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.EnterToRoomRequest;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EventType;
-import com.gft.bench.events.MessageEvent;
-import com.gft.bench.exceptions.RequestException;
 
 /**
  * Created by tzms on 3/31/2016.
@@ -73,8 +70,9 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             try {
                 //Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(event.getReplyTo());
-                TextMessage textMsg = session.createTextMessage(event.getUserName());
-                textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
+                TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
+               // TextMessage textMsg = session.createTextMessage(event.getUserName());
+               // textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
                 //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
@@ -104,12 +102,8 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void onMessage(Message message) {
         try {
-        	if (message instanceof TextMessage) {
-        		TextMessage textMsg = (TextMessage) message;
-        		EventType eventType = EventType.valueOf(textMsg.getStringProperty(EVENT_TYPE));
-        		DataEvent event = eventBuilder(eventType, textMsg);
-        		messageListener.eventReceived(event);
-        	}
+    		DataEvent event = EventBuilderUtil.buildEvent(message);
+    		messageListener.eventReceived(event);
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -119,27 +113,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void setEventListener(ChatEventListener messageListener) {
         this.messageListener = messageListener;
-    }
-    
-    
-    private DataEvent eventBuilder(EventType eventType, TextMessage textMsg) throws JMSException {
-    	
-    	DataEvent event = null;
-    	
-    	switch (eventType) {
-		case CREATE_USER: event = new MessageEvent(EventType.CREATE_USER, textMsg.getStringProperty(USER_NAME));
-						  event.setReplyTo(textMsg.getJMSReplyTo());
-						  break;
-		case ENTER_ROOM: event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
-						 break;
-		case EXIT_ROOM: break;
-		case MESSAGE: event = new MessageEvent(EventType.MESSAGE, textMsg.getStringProperty(ROOM_NAME));
-					  break;
-		default:
-			throw new RequestException("Not supported event type: " + eventType);
-		}
-    	
-    	return event;
     }
 
 }

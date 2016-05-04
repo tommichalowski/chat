@@ -90,8 +90,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     @Override
     public void eventReceived(DataEvent event) {
         log.info("Client received message: " + event.getData());
-        log.info("Client rec"
-        		+ "eived userName: " + event.getUserName());
+        log.info("Client received userName: " + event.getUserName());
         CompletableFuture<DataEvent> completableFuture = futureMessageMap.get("MessageId");
         completableFuture.complete(event);
     }

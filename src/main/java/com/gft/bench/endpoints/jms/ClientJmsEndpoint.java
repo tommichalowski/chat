@@ -19,8 +19,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EventType;
-import com.gft.bench.events.MessageEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -80,7 +78,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     public void onMessage(Message message) {
 
 		try {
-			DataEvent event = createEvent(message);
+			DataEvent event = EventBuilderUtil.buildEvent(message);
 			messageListener.eventReceived(event);
 		} catch (JMSException e) {
 			e.printStackTrace();
@@ -93,6 +91,18 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
         this.messageListener = messageListener;
     }
 
+    
+    private void sendEvent(DataEvent event) {
+    	try {
+    		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
+    		textMsg.setJMSReplyTo(clientMessageQueue);
+            log.info("Sending message from client, user: " + textMsg.getStringProperty(USER_NAME) + "; room: " + 
+    		         textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
+            producer.send(textMsg);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
     
 //    @Override
 //    public CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException {
@@ -147,45 +157,5 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 //    	
 //    	return resultMsg;
 //    }
-    
-
-    private void sendEvent(DataEvent event) {
-    	try {
-    		TextMessage textMsg = createTextMessage(event);
-    		textMsg.setJMSReplyTo(clientMessageQueue);
-            log.info("Sending message from client, user: " + textMsg.getStringProperty(USER_NAME) + "; room: " + 
-    		         textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
-            producer.send(textMsg);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    
-    private TextMessage createTextMessage(DataEvent event) throws JMSException {
-    	
-    	//MessageEvent messageEvent = (MessageEvent) event;
-        TextMessage textMsg = session.createTextMessage(event.getData());
-        textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
-        textMsg.setStringProperty(USER_NAME, event.getUserName());
-        textMsg.setStringProperty(ROOM_NAME, event.getRoom());
-        return textMsg;
-    }
-    
-    
-    private DataEvent createEvent(Message message) throws JMSException {
-    	
-    	MessageEvent event = null;
-    	
-    	if (message instanceof TextMessage) {
-	    	TextMessage textMsg = (TextMessage) message;
-	    	EventType eventType = EventType.valueOf(textMsg.getStringProperty(EVENT_TYPE));
-	    	event = new MessageEvent(eventType);
-	    	event.setData(textMsg.getText());
-	    	event.setUserName(textMsg.getStringProperty(USER_NAME));
-	    	event.setRoom(textMsg.getStringProperty(ROOM_NAME));
-    	}
-    	
-    	return event;
-    }
+     
 }
