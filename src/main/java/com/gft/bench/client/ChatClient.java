@@ -2,7 +2,7 @@ package com.gft.bench.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.ResultMsg;
 
 /**
@@ -21,11 +21,11 @@ public interface ChatClient {
      */
 	//ResultMsg enterToRoom(String room);
 	
-	CompletableFuture<ChatEvent> createUser(String userName);
+	CompletableFuture<DataEvent> createUser(String userName);
 	
-	CompletableFuture<ChatEvent> enterToRoom(String room);
+	CompletableFuture<DataEvent> enterToRoom(String room);
     
-    CompletableFuture<ChatEvent> sendMessageToRoom(String room, String message);
+    CompletableFuture<DataEvent> sendMessageToRoom(String room, String message);
     
     ResultMsg exitRoom(String room);
 }

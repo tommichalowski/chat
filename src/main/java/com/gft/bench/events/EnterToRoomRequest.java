@@ -2,7 +2,7 @@ package com.gft.bench.events;
 
 import javax.jms.Destination;
 
-public class EnterToRoomRequest implements ChatEvent {
+public class EnterToRoomRequest implements DataEvent {
 
     private final EventType type;
     private final String room;
@@ -36,7 +36,7 @@ public class EnterToRoomRequest implements ChatEvent {
     }
 
     @Override
-    public String getMessage() { return message; }
+    public String getData() { return message; }
 
     @Override
 	public String getUserName() {
@@ -53,5 +53,23 @@ public class EnterToRoomRequest implements ChatEvent {
 	
 	public RequestResult getRequestResult() {
 		return result;
+	}
+
+	@Override
+	public void setUserName(String userName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setRoom(String room) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setData(String data) {
+		// TODO Auto-generated method stub
+		
 	}
 }

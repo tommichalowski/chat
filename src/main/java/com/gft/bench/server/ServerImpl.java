@@ -12,7 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ServerEndpoint;
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
@@ -48,7 +48,7 @@ public class ServerImpl implements Server {
 
 
     @Override
-    public void eventReceived(ChatEvent event) {
+    public void eventReceived(DataEvent event) {
 
     	log.info("eventReceived thread: " + Thread.currentThread().getId());
     	log.info("event type: " + event.getType());
@@ -77,7 +77,7 @@ public class ServerImpl implements Server {
         } else if (event.getType() == EventType.MESSAGE) {
             MessageEvent messageEvent = (MessageEvent) event;
             LinkedList<String> roomHistory = getRoomHistory(messageEvent.getRoom());
-            roomHistory.add(messageEvent.getMessage());
+            roomHistory.add(messageEvent.getData());
             log.info("Room history: " + roomHistory);
             
             chatEndpoint.sendEvent(messageEvent);

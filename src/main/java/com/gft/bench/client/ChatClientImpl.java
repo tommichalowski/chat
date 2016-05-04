@@ -8,14 +8,12 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
-import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.EnterToRoomRequest;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.ResultMsg;
 import com.gft.bench.exceptions.ChatException;
-import com.gft.bench.exceptions.RequestException;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -27,7 +25,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     //private static final int TIMEOUT = 5; 
     
     private ClientEndpoint clientEndpoint;
-    private ConcurrentHashMap<String, CompletableFuture<ChatEvent>> futureMessageMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, CompletableFuture<DataEvent>> futureMessageMap = new ConcurrentHashMap<>();
   
     /**
      * Constructs a new chat client object with default JMS broker.
@@ -53,47 +51,48 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
 
     @Override
-    public CompletableFuture<ChatEvent> enterToRoom(String room) {
+    public CompletableFuture<DataEvent> enterToRoom(String room) {
     	
-    	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
-    	clientEndpoint.sendEvent(event);
+//    	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
+//    	clientEndpoint.sendEvent(event);
     	
-    	CompletableFuture<ChatEvent> future = null;
-    	try {
-			future = clientEndpoint.receiveEvent(event.getType());		
-		} catch (RequestException e) {
-			log.error("Logging exception on enterToRoomRequest:", e);
-		}
+    	CompletableFuture<DataEvent> future = null;
+//    	try {
+//			future = clientEndpoint.receiveEvent(event.getType());		
+//		} catch (RequestException e) {
+//			log.error("Logging exception on enterToRoomRequest:", e);
+//		}
 
 		return future;
 	}
     
     
 	@Override
-	public CompletableFuture<ChatEvent> createUser(String userName) {
+	public CompletableFuture<DataEvent> createUser(String userName) {
 		
-		ChatEvent event = new MessageEvent(EventType.CREATE_USER, userName);
-		CompletableFuture<ChatEvent> future = clientEndpoint.request(event);
+		DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
+		CompletableFuture<DataEvent> future = clientEndpoint.request(event);
         futureMessageMap.put("MessageId", future);
         return future;
 	}
 	
     
     @Override
-    public CompletableFuture<ChatEvent> sendMessageToRoom(String room, String message) {
+    public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
 
         MessageEvent event = new MessageEvent(EventType.MESSAGE, message, room);
-        CompletableFuture<ChatEvent> future = clientEndpoint.request(event);
+        CompletableFuture<DataEvent> future = clientEndpoint.request(event);
         futureMessageMap.put("MessageId", future);
         return future;
     }
 	
 
     @Override
-    public void eventReceived(ChatEvent event) {
-        log.info("Client reveived message: " + event.getMessage());
-        log.info("Client reveived userName: " + event.getUserName());
-        CompletableFuture<ChatEvent> completableFuture = futureMessageMap.get("MessageId");
+    public void eventReceived(DataEvent event) {
+        log.info("Client received message: " + event.getData());
+        log.info("Client rec"
+        		+ "eived userName: " + event.getUserName());
+        CompletableFuture<DataEvent> completableFuture = futureMessageMap.get("MessageId");
         completableFuture.complete(event);
     }
        

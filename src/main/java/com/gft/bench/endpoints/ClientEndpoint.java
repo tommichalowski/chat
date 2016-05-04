@@ -2,10 +2,8 @@ package com.gft.bench.endpoints;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.gft.bench.events.ChatEvent;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.EventType;
-import com.gft.bench.exceptions.RequestException;
+import com.gft.bench.events.DataEvent;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -14,11 +12,11 @@ public interface ClientEndpoint {
 
     void listenForEvent();
     
-    void sendEvent(ChatEvent event);
+   // void sendEvent(ChatEvent event);
 
-    CompletableFuture<ChatEvent> request(ChatEvent event);
+    CompletableFuture<DataEvent> request(DataEvent event);
     
-    CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException;
+//    CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException;
     
     void setEventListener(ChatEventListener messageListener);
 }

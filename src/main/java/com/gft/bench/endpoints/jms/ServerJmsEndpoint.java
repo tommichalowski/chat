@@ -15,11 +15,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ServerEndpoint;
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
+import com.gft.bench.exceptions.RequestException;
 
 /**
  * Created by tzms on 3/31/2016.
@@ -44,13 +45,13 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
 
 
     @Override
-    public void sendEvent(ChatEvent event) {
+    public void sendEvent(DataEvent event) {
 
         if (event.getType() == EventType.ENTER_ROOM) {
             try {
                 Destination destination = session.createQueue(EVENT_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(event.getMessage());
+                TextMessage textMsg = session.createTextMessage(event.getData());
                 textMsg.setBooleanProperty(ENTER_ROOM_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
@@ -61,7 +62,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             try {
                 Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(event.getMessage());
+                TextMessage textMsg = session.createTextMessage(event.getData());
                 textMsg.setBooleanProperty(MESSAGE_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
@@ -73,7 +74,8 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                 //Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(event.getReplyTo());
                 TextMessage textMsg = session.createTextMessage(event.getUserName());
-                textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
+                textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
+                //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
                 log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
             } catch (JMSException e) {
@@ -85,9 +87,9 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void listenForEvent() {
         try {
-            Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_SERVER);
-            MessageConsumer eventConsumer = session.createConsumer(serverEventQueue);
-            eventConsumer.setMessageListener(this);
+//            Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_SERVER);
+//            MessageConsumer eventConsumer = session.createConsumer(serverEventQueue);
+//            eventConsumer.setMessageListener(this);
 
             Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
             MessageConsumer messageConsumer = session.createConsumer(serverMessageQueue);
@@ -102,28 +104,12 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void onMessage(Message message) {
         try {
-            if (message.getBooleanProperty(ENTER_ROOM_REQUEST)) {
-                if (message instanceof TextMessage) {
-                    TextMessage textMsg = (TextMessage) message;
-                    EnterToRoomRequest event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
-                    messageListener.eventReceived(event);
-                }
-            } else if (message.getBooleanProperty(MESSAGE_REQUEST)) {
-                if (message instanceof TextMessage) {
-                    TextMessage textMsg = (TextMessage) message;
-                    MessageEvent event = new MessageEvent(EventType.MESSAGE, textMsg.getText(), 
-                    		textMsg.getStringProperty(ROOM_NAME));
-                    messageListener.eventReceived(event);
-                }
-            } else if (message.getBooleanProperty(CREATE_USER_REQUEST)) {
-                if (message instanceof TextMessage) {
-                    TextMessage textMsg = (TextMessage) message;
-                    log.info("received create user");
-                    MessageEvent event = new MessageEvent(EventType.CREATE_USER, textMsg.getStringProperty(USER_NAME));
-                    event.setReplyTo(textMsg.getJMSReplyTo());
-                    messageListener.eventReceived(event);
-                }
-            }
+        	if (message instanceof TextMessage) {
+        		TextMessage textMsg = (TextMessage) message;
+        		EventType eventType = EventType.valueOf(textMsg.getStringProperty(EVENT_TYPE));
+        		DataEvent event = eventBuilder(eventType, textMsg);
+        		messageListener.eventReceived(event);
+        	}
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -133,6 +119,27 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void setEventListener(ChatEventListener messageListener) {
         this.messageListener = messageListener;
+    }
+    
+    
+    private DataEvent eventBuilder(EventType eventType, TextMessage textMsg) throws JMSException {
+    	
+    	DataEvent event = null;
+    	
+    	switch (eventType) {
+		case CREATE_USER: event = new MessageEvent(EventType.CREATE_USER, textMsg.getStringProperty(USER_NAME));
+						  event.setReplyTo(textMsg.getJMSReplyTo());
+						  break;
+		case ENTER_ROOM: event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
+						 break;
+		case EXIT_ROOM: break;
+		case MESSAGE: event = new MessageEvent(EventType.MESSAGE, textMsg.getStringProperty(ROOM_NAME));
+					  break;
+		default:
+			throw new RequestException("Not supported event type: " + eventType);
+		}
+    	
+    	return event;
     }
 
 }

@@ -10,7 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
-import com.gft.bench.events.ChatEvent;
+import com.gft.bench.events.DataEvent;
 import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -35,7 +35,7 @@ public class App {
             try {
                 ChatClient chatClient = new ChatClientImpl();
                 
-                CompletableFuture<ChatEvent> future = chatClient.createUser("Tomasz");
+                CompletableFuture<DataEvent> future = chatClient.createUser("Tomasz");
                 
                 future.thenApply(result -> {
                 	log.info("Create user result: " + result.getUserName());
