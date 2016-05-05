@@ -2,7 +2,6 @@ package com.gft.bench.endpoints.jms;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.command.ActiveMQTextMessage;
@@ -18,10 +17,11 @@ public class EventBuilderUtil implements JmsEndpoint {
     	
         //TextMessage textMsg = session.createTextMessage(event.getData());
     	TextMessage textMsg = new ActiveMQTextMessage();
+    	textMsg.setText(event.getData());
         textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
         textMsg.setStringProperty(USER_NAME, event.getUserName());
         textMsg.setStringProperty(ROOM_NAME, event.getRoom());
-        textMsg.setJMSReplyTo(event.getReplyTo());
+        //textMsg.setJMSReplyTo(event.getReplyTo());
         return textMsg;
     }
     
@@ -37,7 +37,7 @@ public class EventBuilderUtil implements JmsEndpoint {
 	    	event.setData(textMsg.getText());
 	    	event.setUserName(textMsg.getStringProperty(USER_NAME));
 	    	event.setRoom(textMsg.getStringProperty(ROOM_NAME));
-	    	event.setReplyTo(textMsg.getJMSReplyTo());
+	    	//event.setReplyTo(textMsg.getJMSReplyTo());
     	}
     	
     	return event;

@@ -57,7 +57,7 @@ public class ServerImpl implements Server {
     		MessageEvent messageEvent = (MessageEvent) event;
     		log.info("\nCreating user: " + messageEvent.getUserName());
     		try {
-				TimeUnit.SECONDS.sleep(6);
+				TimeUnit.SECONDS.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

@@ -73,6 +73,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
 		CompletableFuture<DataEvent> future = clientEndpoint.request(event);
         futureMessageMap.put("MessageId", future);
+        log.info("\n\nFuturesMap: " + futureMessageMap.toString() + "\n\n");
         return future;
 	}
 	
@@ -92,6 +93,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
         log.info("Client received message: " + event.getData());
         log.info("Client received userName: " + event.getUserName());
         CompletableFuture<DataEvent> completableFuture = futureMessageMap.get("MessageId");
+        if (completableFuture == null) {
+        	log.info("future is null!!!!!!");
+        } else {
+        	log.info("Future not null :)");
+        }
         completableFuture.complete(event);
     }
        

@@ -79,6 +79,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 
 		try {
 			DataEvent event = EventBuilderUtil.buildEvent(message);
+			log.info("Received event: " + event.getType() + "; UserName: " + event.getUserName()); 
 			messageListener.eventReceived(event);
 		} catch (JMSException e) {
 			e.printStackTrace();
@@ -95,7 +96,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     private void sendEvent(DataEvent event) {
     	try {
     		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
-    		textMsg.setJMSReplyTo(clientMessageQueue);
             log.info("Sending message from client, user: " + textMsg.getStringProperty(USER_NAME) + "; room: " + 
     		         textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
             producer.send(textMsg);

@@ -68,15 +68,17 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             }
         } else if (event.getType() == EventType.CREATE_USER) {
             try {
-                //Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-                MessageProducer producer = session.createProducer(event.getReplyTo());
+                Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+                MessageProducer producer = session.createProducer(destination);
                 TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
                // TextMessage textMsg = session.createTextMessage(event.getUserName());
                // textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
                 //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
-                log.info("Server responds with message: \n" + textMsg.getText());
+                log.info("Server responds on CREATE_USER with message: " + textMsg.getStringProperty(USER_NAME));
                 producer.send(textMsg);
+                //producer.close();
             } catch (JMSException e) {
+            	log.error("ERROR on server create user!!!");
                 e.printStackTrace();
             }
         }
