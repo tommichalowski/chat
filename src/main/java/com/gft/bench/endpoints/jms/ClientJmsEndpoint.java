@@ -30,6 +30,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 
 	private static final Log log = LogFactory.getLog(ClientJmsEndpoint.class);
     protected final String brokerUrl;
+    private Connection connection;
     protected Session session;
     MessageProducer producer;
     private Destination clientMessageQueue;
@@ -41,9 +42,9 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     	this.brokerUrl = brokerUrl;
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
         try {
-        	Connection connection = connectionFactory.createConnection();
+        	connection = connectionFactory.createConnection();
 			connection.start();
-	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	        session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 	        Destination destination = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
             producer = session.createProducer(destination);
 		} catch (JMSException e) {
@@ -76,12 +77,13 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     
     @Override
     public void onMessage(Message message) {
-
 		try {
+	    	message.acknowledge();
 			DataEvent event = EventBuilderUtil.buildEvent(message);
-			log.info("Received event: " + event.getType() + "; UserName: " + event.getUserName()); 
+			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
 			messageListener.eventReceived(event);
 		} catch (JMSException e) {
+			log.error("\nOnMessage ERROR in client!\n\n\n");
 			e.printStackTrace();
 		}
     }
@@ -96,12 +98,24 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     private void sendEvent(DataEvent event) {
     	try {
     		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
-            log.info("Sending message from client, user: " + textMsg.getStringProperty(USER_NAME) + "; room: " + 
-    		         textMsg.getStringProperty(ROOM_NAME) + "; Data: " + textMsg.getText());
             producer.send(textMsg);
         } catch (JMSException e) {
             e.printStackTrace();
         }
+    }
+    
+    
+    @Override
+    public void cleanup() throws JMSException {
+    	if (producer != null) {
+    		producer.close();
+    	}
+    	if (session != null) {
+    		session.close();
+    	}
+    	if (connection != null) {
+    		connection.close();
+    	}
     }
     
 //    @Override

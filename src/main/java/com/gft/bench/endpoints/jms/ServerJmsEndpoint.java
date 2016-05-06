@@ -29,6 +29,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     protected ActiveMQConnectionFactory connectionFactory;
     protected Connection connection;
     protected Session session;
+    MessageConsumer messageConsumer;
     protected ChatEventListener messageListener;
 
     
@@ -50,7 +51,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                 MessageProducer producer = session.createProducer(destination);
                 TextMessage textMsg = session.createTextMessage(event.getData());
                 textMsg.setBooleanProperty(ENTER_ROOM_CONFIRMED, true);
-                log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
             } catch (JMSException e) {
                 e.printStackTrace();
@@ -61,7 +61,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                 MessageProducer producer = session.createProducer(destination);
                 TextMessage textMsg = session.createTextMessage(event.getData());
                 textMsg.setBooleanProperty(MESSAGE_CONFIRMED, true);
-                log.info("Server responds with message: \n" + textMsg.getText());
                 producer.send(textMsg);
             } catch (JMSException e) {
                 e.printStackTrace();
@@ -74,7 +73,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
                // TextMessage textMsg = session.createTextMessage(event.getUserName());
                // textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
                 //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
-                log.info("Server responds on CREATE_USER with message: " + textMsg.getStringProperty(USER_NAME));
                 producer.send(textMsg);
                 //producer.close();
             } catch (JMSException e) {
@@ -92,9 +90,9 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
 //            eventConsumer.setMessageListener(this);
 
             Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
-            MessageConsumer messageConsumer = session.createConsumer(serverMessageQueue);
+            messageConsumer = session.createConsumer(serverMessageQueue);
             messageConsumer.setMessageListener(this);
-
+            
             log.info("Server is listening...");
         } catch (JMSException e) {
             e.printStackTrace();
@@ -117,4 +115,17 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
         this.messageListener = messageListener;
     }
 
+    @Override
+    public void cleanup() throws JMSException {
+    	if (messageConsumer != null) {
+    		messageConsumer.close();
+    	}
+    	if (session != null) {
+    		session.close();
+    	}
+    	if (connection != null) {
+    		connection.close();
+    	}
+    }
+    
 }

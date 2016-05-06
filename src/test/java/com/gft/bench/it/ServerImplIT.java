@@ -1,19 +1,14 @@
 package com.gft.bench.it;
 
-import static org.hamcrest.CoreMatchers.containsString;
-
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import javax.jms.JMSException;
 
 import org.apache.activemq.broker.BrokerService;
-import org.junit.After;
-import org.junit.AfterClass;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.gft.bench.client.ChatClient;
@@ -24,9 +19,6 @@ import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.RequestResult;
-import com.gft.bench.events.ResultMsg;
-import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -35,6 +27,7 @@ import com.gft.bench.server.ServerImpl;
  */
 public class ServerImplIT {
 
+	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618"; // "tcp://localhost:8161";
     
     private BrokerService broker = null;
@@ -77,36 +70,23 @@ public class ServerImplIT {
 
     
     @Test
-    public void shouldRespondToCorrectClient() {
-    	
-    	try {
+    public void shouldRespondToCorrectClient() throws Exception {
 	    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-	        @SuppressWarnings("unused")
 			Server server = new ServerImpl(serverEndpoint);
 	        
 	        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
 	        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
 	        
-	//        ClientEndpoint clientEndpoint2 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-	//        ChatClient chatClient2 = new ChatClientImpl(clientEndpoint2);
-	        
 	        String userName = "Tomasz_Test";
 	        CompletableFuture<DataEvent> future = chatClient1.createUser(userName);
-	        
+
 	        DataEvent result = future.get();
-	        Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
 	        
-	        TimeUnit.SECONDS.sleep(1);
-	//                
-	//        future.thenApply(result -> {
-	//        	System.out.println("Create user result: " + result.getUserName());
-	//        	Assert.assertEquals("Should have responded with expected message.", "Bad", result.getUserName());
-	//        	return result;
-	//        });
-		} catch (Exception e) {
-			System.out.println("ERROR on test!!!");
-			e.printStackTrace();
-		}
+	        log.info("Asserts incoming!");
+	        Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
+	                
+	        chatClient1.stopClient();
+	        server.stopServer();
     }
     
     

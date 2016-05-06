@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.ResultMsg;
+import com.gft.bench.exceptions.ChatException;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -28,4 +29,6 @@ public interface ChatClient {
     CompletableFuture<DataEvent> sendMessageToRoom(String room, String message);
     
     ResultMsg exitRoom(String room);
+    
+    void stopClient() throws ChatException;
 }

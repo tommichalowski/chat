@@ -3,6 +3,8 @@ package com.gft.bench.client;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jms.JMSException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -72,15 +74,20 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		
 		DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
 		CompletableFuture<DataEvent> future = clientEndpoint.request(event);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         futureMessageMap.put("MessageId", future);
-        log.info("\n\nFuturesMap: " + futureMessageMap.toString() + "\n\n");
+        log.info("FuturesMap: " + futureMessageMap.toString() + "\n");
         return future;
 	}
 	
     
     @Override
     public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
-
         MessageEvent event = new MessageEvent(EventType.MESSAGE, message, room);
         CompletableFuture<DataEvent> future = clientEndpoint.request(event);
         futureMessageMap.put("MessageId", future);
@@ -90,14 +97,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     @Override
     public void eventReceived(DataEvent event) {
-        log.info("Client received message: " + event.getData());
-        log.info("Client received userName: " + event.getUserName());
         CompletableFuture<DataEvent> completableFuture = futureMessageMap.get("MessageId");
-        if (completableFuture == null) {
-        	log.info("future is null!!!!!!");
-        } else {
-        	log.info("Future not null :)");
-        }
         completableFuture.complete(event);
     }
        
@@ -105,6 +105,16 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     @Override
     public ResultMsg exitRoom(String room) {
         return null;
+    }
+    
+    
+    @Override
+    public void stopClient() throws ChatException { 
+    	try {
+			clientEndpoint.cleanup();
+		} catch (JMSException e) {
+			throw new ChatException(e);
+		}
     }
    
     

@@ -1,6 +1,9 @@
 package com.gft.bench.endpoints;
 
 import com.gft.bench.events.DataEvent;
+
+import javax.jms.JMSException;
+
 import com.gft.bench.events.ChatEventListener;
 
 /**
@@ -13,4 +16,6 @@ public interface ServerEndpoint {
     void sendEvent(DataEvent event);
     
     void setEventListener(ChatEventListener messageListener);
+    
+    void cleanup() throws JMSException;
 }

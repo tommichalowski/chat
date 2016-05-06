@@ -17,6 +17,7 @@ import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.exceptions.ChatException;
 
 
 
@@ -55,12 +56,10 @@ public class ServerImpl implements Server {
     	
     	if (event.getType() == EventType.CREATE_USER) {
     		MessageEvent messageEvent = (MessageEvent) event;
-    		log.info("\nCreating user: " + messageEvent.getUserName());
-    		try {
-				TimeUnit.SECONDS.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+    		log.info("Creating user: " + messageEvent.getUserName());
+//    		try {
+//				TimeUnit.SECONDS.sleep(6);
+//			} catch (InterruptedException e) {}
     		chatEndpoint.sendEvent(messageEvent);
     		
     	} else if (event.getType() == EventType.ENTER_ROOM) {
@@ -85,10 +84,18 @@ public class ServerImpl implements Server {
     }
     
     @Override
-    public void startServer() throws JMSException {  }
+    public void startServer() {  }
 
     @Override
-    public void stopServer() {  }
+    public void stopServer() throws ChatException { 
+    	try {
+    		log.info("Stopping server.");
+			chatEndpoint.cleanup();
+			log.info("Server stopped.");
+		} catch (JMSException e) {
+			throw new ChatException(e);
+		}
+    }
 
     @Override
     public LinkedList<String> getRoomHistory(String room) {
