@@ -16,4 +16,8 @@ public interface DataEvent {
     void setData(String data);
     Destination getReplyTo();
     void setReplyTo(Destination replyTo);
+    RequestResult getResult();
+	void setResult(RequestResult result);
+    String getEventId();
+    void setEventId(String eventId);
 }

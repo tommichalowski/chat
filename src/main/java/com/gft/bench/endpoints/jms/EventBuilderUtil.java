@@ -15,13 +15,17 @@ public class EventBuilderUtil implements JmsEndpoint {
 	
     public static TextMessage buildTextMessage(DataEvent event) throws JMSException {
     	
-        //TextMessage textMsg = session.createTextMessage(event.getData());
     	TextMessage textMsg = new ActiveMQTextMessage();
     	textMsg.setText(event.getData());
         textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
         textMsg.setStringProperty(USER_NAME, event.getUserName());
         textMsg.setStringProperty(ROOM_NAME, event.getRoom());
-        //textMsg.setJMSReplyTo(event.getReplyTo());
+        textMsg.setJMSMessageID(event.getEventId());
+        textMsg.setJMSCorrelationID(event.getEventId());
+        
+        if (event.getType().isRequestResponse()) {
+        	textMsg.setJMSReplyTo(event.getReplyTo());
+    	}
         return textMsg;
     }
     
@@ -37,7 +41,11 @@ public class EventBuilderUtil implements JmsEndpoint {
 	    	event.setData(textMsg.getText());
 	    	event.setUserName(textMsg.getStringProperty(USER_NAME));
 	    	event.setRoom(textMsg.getStringProperty(ROOM_NAME));
-	    	//event.setReplyTo(textMsg.getJMSReplyTo());
+	    	event.setEventId(textMsg.getJMSCorrelationID());
+	    	
+	    	if (eventType.isRequestResponse()) {
+	    		event.setReplyTo(textMsg.getJMSReplyTo());
+	    	}
     	}
     	
     	return event;

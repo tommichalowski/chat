@@ -2,8 +2,6 @@ package com.gft.bench.it;
 
 import java.util.concurrent.CompletableFuture;
 
-import javax.jms.JMSException;
-
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,8 +25,9 @@ import com.gft.bench.server.ServerImpl;
  */
 public class ServerImplIT {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
-    private static final String BROKER_URL = "tcp://localhost:62618"; // "tcp://localhost:8161";
+    private static final String BROKER_URL = "tcp://localhost:62618";
     
     private BrokerService broker = null;
 //    private Server server;
@@ -70,7 +69,8 @@ public class ServerImplIT {
 
     
     @Test
-    public void shouldRespondToCorrectClient() throws Exception {
+    public void shouldSuccessfulCreateUser() throws Exception {
+    	
 	    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
 			Server server = new ServerImpl(serverEndpoint);
 	        
@@ -81,8 +81,7 @@ public class ServerImplIT {
 	        CompletableFuture<DataEvent> future = chatClient1.createUser(userName);
 
 	        DataEvent result = future.get();
-	        
-	        log.info("Asserts incoming!");
+
 	        Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
 	                
 	        chatClient1.stopClient();

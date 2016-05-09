@@ -45,17 +45,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void sendEvent(DataEvent event) {
 
-        if (event.getType() == EventType.ENTER_ROOM) {
-            try {
-                Destination destination = session.createQueue(EVENT_QUEUE_TO_CLIENT);
-                MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(event.getData());
-                textMsg.setBooleanProperty(ENTER_ROOM_CONFIRMED, true);
-                producer.send(textMsg);
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        } else if (event.getType() == EventType.MESSAGE) {
+        if (event.getType() == EventType.MESSAGE) {
             try {
                 Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
@@ -65,15 +55,21 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
             } catch (JMSException e) {
                 e.printStackTrace();
             }
-        } else if (event.getType() == EventType.CREATE_USER) {
+        } else if (event.getType() == EventType.CREATE_USER || event.getType() == EventType.ENTER_ROOM) {
             try {
-                Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-                MessageProducer producer = session.createProducer(destination);
                 TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
                // TextMessage textMsg = session.createTextMessage(event.getUserName());
                // textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
                 //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
-                producer.send(textMsg);
+                
+                if (event.getType().isRequestResponse()) {
+                	MessageProducer producer = session.createProducer(textMsg.getJMSReplyTo());
+                	producer.send(textMsg.getJMSReplyTo(), textMsg);
+                } else {
+                	Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+                    MessageProducer producer = session.createProducer(destination);
+                	producer.send(textMsg);
+                }
                 //producer.close();
             } catch (JMSException e) {
             	log.error("ERROR on server create user!!!");

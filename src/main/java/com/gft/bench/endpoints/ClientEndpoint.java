@@ -18,6 +18,8 @@ public interface ClientEndpoint {
 
     CompletableFuture<DataEvent> request(DataEvent event);
     
+    void sendEvent(DataEvent event);
+    
 //    CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException;
     
     void setEventListener(ChatEventListener messageListener);

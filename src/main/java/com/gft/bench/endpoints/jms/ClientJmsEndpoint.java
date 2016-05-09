@@ -44,7 +44,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
         try {
         	connection = connectionFactory.createConnection();
 			connection.start();
-	        session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 	        Destination destination = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
             producer = session.createProducer(destination);
 		} catch (JMSException e) {
@@ -78,7 +78,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     @Override
     public void onMessage(Message message) {
 		try {
-	    	message.acknowledge();
 			DataEvent event = EventBuilderUtil.buildEvent(message);
 			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
 			messageListener.eventReceived(event);
@@ -95,14 +94,21 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     }
 
     
-    private void sendEvent(DataEvent event) {
+    public void sendEvent(DataEvent event) {
     	try {
     		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
+    		if (event.getType().isRequestResponse()) {
+    			Destination tempDest = session.createTemporaryQueue();
+    			MessageConsumer responseConsumer = session.createConsumer(tempDest);
+    			responseConsumer.setMessageListener(this);
+    			textMsg.setJMSReplyTo(tempDest);
+    		}
             producer.send(textMsg);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
+    
     
     
     @Override

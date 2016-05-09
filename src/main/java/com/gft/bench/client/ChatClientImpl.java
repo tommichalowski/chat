@@ -22,12 +22,12 @@ import com.gft.bench.exceptions.ChatException;
  */
 public class ChatClientImpl implements ChatClient, ChatEventListener {
 
-    private static final Log log = LogFactory.getLog(ChatClientImpl.class);
+	private static final Log log = LogFactory.getLog(ChatClientImpl.class);
     private static final String BROKER_URL = "tcp://localhost:61616";
     //private static final int TIMEOUT = 5; 
     
     private ClientEndpoint clientEndpoint;
-    private ConcurrentHashMap<String, CompletableFuture<DataEvent>> futureMessageMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, CompletableFuture<DataEvent>> futureMessageMap = new ConcurrentHashMap<String, CompletableFuture<DataEvent>>();
   
     /**
      * Constructs a new chat client object with default JMS broker.
@@ -50,41 +50,37 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		clientEndpoint.setEventListener(this);
 	    clientEndpoint.listenForEvent(); 
     }
-
-
-    @Override
-    public CompletableFuture<DataEvent> enterToRoom(String room) {
-    	
-//    	ChatEvent event = new EnterToRoomRequest(EventType.ENTER_ROOM, room);
-//    	clientEndpoint.sendEvent(event);
-    	
-    	CompletableFuture<DataEvent> future = null;
-//    	try {
-//			future = clientEndpoint.receiveEvent(event.getType());		
-//		} catch (RequestException e) {
-//			log.error("Logging exception on enterToRoomRequest:", e);
-//		}
-
-		return future;
-	}
     
     
 	@Override
 	public CompletableFuture<DataEvent> createUser(String userName) {
 		
 		DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
-		CompletableFuture<DataEvent> future = clientEndpoint.request(event);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        futureMessageMap.put("MessageId", future);
-        log.info("FuturesMap: " + futureMessageMap.toString() + "\n");
-        return future;
+		CompletableFuture<DataEvent> future = requestAsync(event);
+    	return future;
 	}
 	
+	
+    @Override
+    public CompletableFuture<DataEvent> enterToRoom(String userName, String room) {
+    	
+    	DataEvent event = new MessageEvent(EventType.ENTER_ROOM, userName, room);
+    	CompletableFuture<DataEvent> future = requestAsync(event);
+    	return future;
+	}
+	
+    
+    private CompletableFuture<DataEvent> requestAsync(DataEvent event) {
+    	
+    	CompletableFuture<DataEvent> future = new CompletableFuture<DataEvent>();
+		futureMessageMap.put(event.getEventId(), future);
+		log.info("Putting new future for event id: " + event.getEventId());
+		clientEndpoint.sendEvent(event);
+		return future;
+    }
+    
+    
+    
     
     @Override
     public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
@@ -97,7 +93,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     @Override
     public void eventReceived(DataEvent event) {
-        CompletableFuture<DataEvent> completableFuture = futureMessageMap.get("MessageId");
+    	for (String eventId : futureMessageMap.keySet()) {
+    		log.info("Future map keys: " + eventId);
+    	}
+        CompletableFuture<DataEvent> completableFuture = futureMessageMap.get(event.getEventId());
+        log.info("completableFuture: " + completableFuture);
         completableFuture.complete(event);
     }
        

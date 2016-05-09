@@ -35,11 +35,17 @@ public class App {
             try {
                 ChatClient chatClient = new ChatClientImpl();
                 
-                CompletableFuture<DataEvent> future = chatClient.createUser("Tomasz");
+                String userName = "Tomi";
+                
+                CompletableFuture<DataEvent> future = chatClient.createUser(userName);
                 
                 future.thenApply(result -> {
                 	log.info("Create user result: " + result.getUserName());
                 	return result;
+                }).thenApply(result -> chatClient.enterToRoom(userName, "Movies")).
+                thenApply(restult -> { 
+                	log.info("Enter room resultL " + restult.get);
+                	return restult;
                 });
                 	
 //                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");

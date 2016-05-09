@@ -1,5 +1,7 @@
 package com.gft.bench.events;
 
+import java.util.UUID;
+
 import javax.jms.Destination;
 
 /**
@@ -13,21 +15,25 @@ public class MessageEvent implements DataEvent {
     private String data;
     private Destination replyTo;
     private RequestResult result;
+    private String eventId;
     
     
     public MessageEvent(EventType type) {
     	this.type = type;
+    	setUniqueEventId();
     }
     
     public MessageEvent(EventType type, String userName) {
     	this.type = type;
     	this.userName = userName;
+    	setUniqueEventId();
     }
     
     public MessageEvent(EventType type, String userName, String room) {
 		this.type = type;
 		this.userName = userName;
 		this.room = room;
+		setUniqueEventId();
 	}
     
     public MessageEvent(EventType type, String userName, String room, String data) {
@@ -35,8 +41,12 @@ public class MessageEvent implements DataEvent {
 		this.userName = userName;
 		this.room = room;
 		this.data = data;
+		setUniqueEventId();
 	}
 
+    private void setUniqueEventId() {
+    	this.eventId = UUID.randomUUID().toString();
+    }
     
     @Override
 	public String getUserName() {
@@ -90,6 +100,17 @@ public class MessageEvent implements DataEvent {
 	public void setResult(RequestResult result) {
 		this.result = result;
 	}
+
+	@Override
+	public String getEventId() {
+		return eventId;
+	}
+
+	@Override
+	public void setEventId(String eventId) {
+		this.eventId = eventId;
+	}
+	
     
 }
 

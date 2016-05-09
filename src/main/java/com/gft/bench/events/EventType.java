@@ -28,4 +28,12 @@ public enum EventType {
 			default: throw new RequestException("Not supported event type error occured! Event: " + type);
 		}
     }
+    
+    public boolean isRequestResponse() {
+    	
+    	if (this == CREATE_USER || this == ENTER_ROOM || this == EXIT_ROOM) {
+    		return true;
+    	}
+    	return false;
+    }
 }

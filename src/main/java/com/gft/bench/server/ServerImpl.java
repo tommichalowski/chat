@@ -13,7 +13,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EnterToRoomRequest;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
@@ -63,15 +62,14 @@ public class ServerImpl implements Server {
     		chatEndpoint.sendEvent(messageEvent);
     		
     	} else if (event.getType() == EventType.ENTER_ROOM) {
-            EnterToRoomRequest enterToRoomEvent = (EnterToRoomRequest) event;
-            String room = enterToRoomEvent.getRoom();
+    		MessageEvent messageEvent = (MessageEvent) event;
+            String room = messageEvent.getRoom();
             log.info("\nCreating room: " + room);
             addRoom(room);
 
-            LinkedList<String> roomHistory = getRoomHistory(room);
-            EnterToRoomRequest eventResponse = new EnterToRoomRequest(EventType.ENTER_ROOM, room, roomHistory.toString(),
-            		RequestResult.SUCCESS);
-            chatEndpoint.sendEvent(eventResponse);
+            //LinkedList<String> roomHistory = getRoomHistory(room);
+            messageEvent.setResult(RequestResult.SUCCESS);
+            chatEndpoint.sendEvent(messageEvent);
 
         } else if (event.getType() == EventType.MESSAGE) {
             MessageEvent messageEvent = (MessageEvent) event;
