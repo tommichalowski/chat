@@ -9,6 +9,7 @@ import org.apache.activemq.command.ActiveMQTextMessage;
 import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
+import com.gft.bench.events.RequestResult;
 
 public class EventBuilderUtil implements JmsEndpoint {
 
@@ -20,7 +21,9 @@ public class EventBuilderUtil implements JmsEndpoint {
         textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
         textMsg.setStringProperty(USER_NAME, event.getUserName());
         textMsg.setStringProperty(ROOM_NAME, event.getRoom());
-        textMsg.setJMSMessageID(event.getEventId());
+        if (event.getResult() != null) {
+        	textMsg.setStringProperty(REQUEST_RESULT, event.getResult().toString());
+        }
         textMsg.setJMSCorrelationID(event.getEventId());
         
         if (event.getType().isRequestResponse()) {
@@ -41,6 +44,9 @@ public class EventBuilderUtil implements JmsEndpoint {
 	    	event.setData(textMsg.getText());
 	    	event.setUserName(textMsg.getStringProperty(USER_NAME));
 	    	event.setRoom(textMsg.getStringProperty(ROOM_NAME));
+	    	if (textMsg.getStringProperty(REQUEST_RESULT) != null) {
+	    		event.setResult( RequestResult.valueOf(textMsg.getStringProperty(REQUEST_RESULT)) );
+	    	}
 	    	event.setEventId(textMsg.getJMSCorrelationID());
 	    	
 	    	if (eventType.isRequestResponse()) {
@@ -50,25 +56,5 @@ public class EventBuilderUtil implements JmsEndpoint {
     	
     	return event;
     }
-	
-//    public static DataEvent buildEvent(EventType eventType, TextMessage textMsg) throws JMSException {
-//    	
-//    	DataEvent event = null;
-//    	
-//    	switch (eventType) {
-//		case CREATE_USER: event = new MessageEvent(EventType.CREATE_USER, textMsg.getStringProperty(USER_NAME));
-//						  event.setReplyTo(textMsg.getJMSReplyTo());
-//						  break;
-//		case ENTER_ROOM: event = new EnterToRoomRequest(EventType.ENTER_ROOM, textMsg.getText());
-//						 break;
-//		case EXIT_ROOM: break;
-//		case MESSAGE: event = new MessageEvent(EventType.MESSAGE, textMsg.getStringProperty(ROOM_NAME));
-//					  break;
-//		default:
-//			throw new RequestException("Not supported event type: " + eventType);
-//		}
-//    	
-//    	return event;
-//    }
     
 }

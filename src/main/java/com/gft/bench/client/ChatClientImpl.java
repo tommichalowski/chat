@@ -82,13 +82,13 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     
     
     
-    @Override
-    public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
-        MessageEvent event = new MessageEvent(EventType.MESSAGE, message, room);
-        CompletableFuture<DataEvent> future = clientEndpoint.request(event);
-        futureMessageMap.put("MessageId", future);
-        return future;
-    }
+//    @Override
+//    public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
+//        MessageEvent event = new MessageEvent(EventType.MESSAGE, message, room);
+//        CompletableFuture<DataEvent> future = clientEndpoint.request(event);
+//        futureMessageMap.put("MessageId", future);
+//        return future;
+//    }
 	
 
     @Override
@@ -101,7 +101,6 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     	if (event != null && event.getEventId() != null) {
 	        CompletableFuture<DataEvent> completableFuture = futureMessageMap.remove(event.getEventId());
 	        if (completableFuture != null) {
-		        log.info("completableFuture: " + completableFuture);
 		        completableFuture.complete(event);
 	        }
     	}

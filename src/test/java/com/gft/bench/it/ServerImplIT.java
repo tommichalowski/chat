@@ -6,7 +6,6 @@ import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.gft.bench.client.ChatClient;
@@ -17,6 +16,7 @@ import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.RequestResult;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -25,67 +25,84 @@ import com.gft.bench.server.ServerImpl;
  */
 public class ServerImplIT {
 
-	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     
-    private BrokerService broker = null;
+    //private BrokerService broker = null;
 //    private Server server;
 //    private ChatClient chatClient;
+        
     
-//    @BeforeClass
-//    public static void runBroker() throws Exception {
-//        startBroker();     
-//    }
-//
-//    @AfterClass
-//    public static void stopBrokerIfRunning() throws Exception {
-//    	if (broker != null && broker.isStarted()) {
-//    		broker.stop();
-//    	}
-//    }
-    
-    
-    @Before
-    public void runBroker() throws Exception {
-        startBroker();     
-    }
-
-//    @After
-//    public void stopBrokerIfRunning() throws Exception {
-//    	if (broker != null && broker.isStarted()) {
-//    		broker.stop();
-//    	}
-//    }
-    
-    
-    private void startBroker() throws Exception {
-    	broker = new BrokerService();
+    private BrokerService startBroker() throws Exception {
+    	
+    	BrokerService broker = new BrokerService();
     	broker.setBrokerId("AMQ-BROKER-TEST");
     	broker.setDeleteAllMessagesOnStartup(true);
     	broker.addConnector(BROKER_URL);
+    	
+    	log.info(broker.getCurrentConnections());
+    	log.info(broker.isStarted());
     	broker.start();
+    	return broker;
+    }
+    
+    private void stopBrokerIfRunning(BrokerService broker) throws Exception {
+		
+    	if (broker != null && broker.isStarted()) {
+			broker.stop();
+		}
     }
 
     
     @Test
-    public void shouldSuccessfulCreateUser() throws Exception {
+    public void createUserShouldReturnSuccessStatus() throws Exception {
     	
-	    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-			Server server = new ServerImpl(serverEndpoint);
-	        
-	        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-	        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
-	        
-	        String userName = "Tomasz_Test";
-	        CompletableFuture<DataEvent> future = chatClient1.createUser(userName);
+    	BrokerService broker = startBroker();
+    	
+    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+		Server server = new ServerImpl(serverEndpoint);
+        
+        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
+        
+        String userName = "Tomasz_Test";
+        CompletableFuture<DataEvent> future = chatClient1.createUser(userName);
 
-	        DataEvent result = future.get();
+        DataEvent result = future.get();
 
-	        Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
-	                
-	        chatClient1.stopClient();
-	        server.stopServer();
+        Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
+        Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
+                
+        chatClient1.stopClient();
+        server.stopServer();
+        stopBrokerIfRunning(broker);
+    }
+    
+    
+    @Test
+    public void createUserShouldReturnErrorStatus() throws Exception {
+    	
+    	BrokerService broker = startBroker();
+    	
+    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+		Server server = new ServerImpl(serverEndpoint);
+        
+        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
+        
+        String userName = "Tomasz_Test";
+        
+        CompletableFuture<DataEvent> futureUser1 = chatClient1.createUser(userName);
+        futureUser1.get();
+        
+        CompletableFuture<DataEvent> futureUser2 = chatClient1.createUser(userName);
+        DataEvent result2 = futureUser2.get();
+
+        Assert.assertEquals(RequestResult.ERROR, result2.getResult());
+                
+        chatClient1.stopClient();
+        server.stopServer();
+        stopBrokerIfRunning(broker);
     }
     
     

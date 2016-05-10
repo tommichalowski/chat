@@ -1,10 +1,9 @@
 package com.gft.bench.endpoints;
 
-import com.gft.bench.events.DataEvent;
-
 import javax.jms.JMSException;
 
 import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.DataEvent;
 
 /**
  * Created by tzms on 3/25/2016.

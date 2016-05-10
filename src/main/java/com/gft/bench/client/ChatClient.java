@@ -26,7 +26,7 @@ public interface ChatClient {
 	
 	CompletableFuture<DataEvent> enterToRoom(String userName, String room);
     
-    CompletableFuture<DataEvent> sendMessageToRoom(String room, String message);
+    //CompletableFuture<DataEvent> sendMessageToRoom(String room, String message);
     
     ResultMsg exitRoom(String room);
     

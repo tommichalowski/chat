@@ -1,7 +1,5 @@
 package com.gft.bench.endpoints.jms;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -54,11 +52,8 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 
     
     @Override
-    public CompletableFuture<DataEvent> request(DataEvent event) { 
-        
-    	CompletableFuture<DataEvent> future = new CompletableFuture<DataEvent>();
-    	sendEvent(event);
-    	return future;
+    public void setEventListener(ChatEventListener messageListener) {
+        this.messageListener = messageListener;
     }
     
     
@@ -86,14 +81,9 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 			e.printStackTrace();
 		}
     }
-    
 
+    
     @Override
-    public void setEventListener(ChatEventListener messageListener) {
-        this.messageListener = messageListener;
-    }
-
-    
     public void sendEvent(DataEvent event) {
     	try {
     		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
@@ -108,7 +98,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
             e.printStackTrace();
         }
     }
-    
     
     
     @Override
@@ -152,30 +141,5 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 //		
 //    	throw new RequestException("Can NOT receive message for: " + eventType);
 //    }
-    
-    
-//    
-//    private ChatEvent processMessage(Message message) throws RequestException {
-//    	
-//    	ChatEvent resultMsg = null;
-//    	
-//    	try {
-//	    	if (message.getBooleanProperty(ENTER_ROOM_CONFIRMED)){
-//	            if (message instanceof TextMessage) {
-//	                TextMessage textMsg = (TextMessage) message;
-//	                resultMsg = new EnterToRoomRequest(EventType.ENTER_ROOM, "room", textMsg.getText(), RequestResult.SUCCESS);
-//	            }
-//	    	} else if (message.getBooleanProperty(MESSAGE_CONFIRMED)) {
-//	    		if (message instanceof TextMessage) {
-//	                TextMessage textMsg = (TextMessage) message;
-//	                resultMsg = new EnterToRoomRequest(EventType.MESSAGE, "room", textMsg.getText(), RequestResult.SUCCESS);
-//	            }
-//	    	}
-//    	} catch (JMSException e) {
-//			throw new RequestException(e);
-//		}
-//    	
-//    	return resultMsg;
-//    }
-     
+         
 }

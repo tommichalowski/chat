@@ -1,6 +1,5 @@
 package com.gft.bench.unitTest;
 
-import org.junit.Assert;
 import org.junit.Before;
 //import static junit.framework.Assert.*;
 import org.junit.Test;

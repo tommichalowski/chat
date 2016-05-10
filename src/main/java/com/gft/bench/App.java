@@ -47,43 +47,6 @@ public class App {
                 
                 enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.getRoom()));
                 
-                
-                
-//                CompletableFuture<CompletableFuture<DataEvent>> enterToRoomFuture = createUserFuture.thenApply(result -> { 
-//                	log.info("Create user result: " + result.getUserName());
-//                	CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, "Movies");
-//                	return future;
-//                });
-//                
-//                enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.))
-                
-                
-                
-                
-//                createUserFuture.thenCompose(result -> { 
-//                	CompletableFuture<DataEvent> cF = new CompletableFuture<>();
-//                	return result;
-//                });
-                
-//                CompletableFuture<DataEvent> thenApply = future.thenApply(result -> {
-//                	log.info("Create user result: " + result.getUserName());
-//                	return result;
-//                });
-                
-//                .thenApply(result -> chatClient.enterToRoom(userName, "Movies")).
-//                thenCompose(restult -> { 
-//                	log.info("Enter room resultL " + restult.get);
-//                	return restult;
-//                });
-                	
-                
-//                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");
-//                
-//                enterToRoomFuture.thenApply(result -> {
-//                	log.info("Enter to room result: " + result.getMessage());
-//                	return result;
-//                });
-//                
 //                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
 //                futureMessage.thenApply(result -> {
 //                	log.info("Message result: " + result.getMessage());
@@ -91,10 +54,7 @@ public class App {
 //                });
                 
                 log.info("I'm still ready to work!!!\n");
-                
-                
-                
-                
+
 //                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
 //                	System.exit(0);
 //                }

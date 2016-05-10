@@ -17,7 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EventType;
 
 /**
  * Created by tzms on 3/31/2016.
@@ -45,46 +44,28 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     @Override
     public void sendEvent(DataEvent event) {
 
-        if (event.getType() == EventType.MESSAGE) {
-            try {
-                Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+        try {
+            TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
+            
+            if (event.getType().isRequestResponse()) {
+            	MessageProducer producer = session.createProducer(textMsg.getJMSReplyTo());
+            	producer.send(textMsg.getJMSReplyTo(), textMsg);
+            } else {
+            	Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
                 MessageProducer producer = session.createProducer(destination);
-                TextMessage textMsg = session.createTextMessage(event.getData());
-                textMsg.setBooleanProperty(MESSAGE_CONFIRMED, true);
-                producer.send(textMsg);
-            } catch (JMSException e) {
-                e.printStackTrace();
+            	producer.send(textMsg);
             }
-        } else if (event.getType() == EventType.CREATE_USER || event.getType() == EventType.ENTER_ROOM) {
-            try {
-                TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
-               // TextMessage textMsg = session.createTextMessage(event.getUserName());
-               // textMsg.setStringProperty(EVENT_TYPE, event.getType().toString());
-                //textMsg.setBooleanProperty(CREATE_USER_CONFIRMED, true);
-                
-                if (event.getType().isRequestResponse()) {
-                	MessageProducer producer = session.createProducer(textMsg.getJMSReplyTo());
-                	producer.send(textMsg.getJMSReplyTo(), textMsg);
-                } else {
-                	Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-                    MessageProducer producer = session.createProducer(destination);
-                	producer.send(textMsg);
-                }
-                //producer.close();
-            } catch (JMSException e) {
-            	log.error("ERROR on server create user!!!");
-                e.printStackTrace();
-            }
+            //producer.close();
+        } catch (JMSException e) {
+        	log.error("ERROR on server create user!!!");
+            e.printStackTrace();
         }
     }
 
+    
     @Override
     public void listenForEvent() {
         try {
-//            Destination serverEventQueue = session.createQueue(EVENT_QUEUE_TO_SERVER);
-//            MessageConsumer eventConsumer = session.createConsumer(serverEventQueue);
-//            eventConsumer.setMessageListener(this);
-
             Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
             messageConsumer = session.createConsumer(serverMessageQueue);
             messageConsumer.setMessageListener(this);
@@ -105,11 +86,12 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
         }
     }
     
-    
+
     @Override
     public void setEventListener(ChatEventListener messageListener) {
         this.messageListener = messageListener;
     }
+    
 
     @Override
     public void cleanup() throws JMSException {

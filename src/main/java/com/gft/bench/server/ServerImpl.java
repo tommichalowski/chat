@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 import javax.jms.JMSException;
 
@@ -59,6 +58,7 @@ public class ServerImpl implements Server {
 //    		try {
 //				TimeUnit.SECONDS.sleep(6);
 //			} catch (InterruptedException e) {}
+    		messageEvent.setResult(RequestResult.SUCCESS);
     		chatEndpoint.sendEvent(messageEvent);
     		
     	} else if (event.getType() == EventType.ENTER_ROOM) {
@@ -81,8 +81,6 @@ public class ServerImpl implements Server {
         }
     }
     
-    @Override
-    public void startServer() {  }
 
     @Override
     public void stopServer() throws ChatException { 
@@ -107,12 +105,6 @@ public class ServerImpl implements Server {
 
     @Override
     public void addRoom(String name) {
-    	
-    	try {
-			TimeUnit.SECONDS.sleep(5);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
     	
         if (roomsHistory.containsKey(name)) {
             LinkedList<String> roomHistory = roomsHistory.get(name);
