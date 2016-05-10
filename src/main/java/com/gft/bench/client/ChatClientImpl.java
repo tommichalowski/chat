@@ -93,12 +93,18 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 
     @Override
     public void eventReceived(DataEvent event) {
+    	
     	for (String eventId : futureMessageMap.keySet()) {
     		log.info("Future map keys: " + eventId);
     	}
-        CompletableFuture<DataEvent> completableFuture = futureMessageMap.get(event.getEventId());
-        log.info("completableFuture: " + completableFuture);
-        completableFuture.complete(event);
+    	
+    	if (event != null && event.getEventId() != null) {
+	        CompletableFuture<DataEvent> completableFuture = futureMessageMap.remove(event.getEventId());
+	        if (completableFuture != null) {
+		        log.info("completableFuture: " + completableFuture);
+		        completableFuture.complete(event);
+	        }
+    	}
     }
        
 

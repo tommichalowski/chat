@@ -37,17 +37,46 @@ public class App {
                 
                 String userName = "Tomi";
                 
-                CompletableFuture<DataEvent> future = chatClient.createUser(userName);
+                CompletableFuture<DataEvent> createUserFuture = chatClient.createUser(userName);
                 
-                future.thenApply(result -> {
+                CompletableFuture<DataEvent> enterToRoomFuture = createUserFuture.thenCompose(result -> { 
                 	log.info("Create user result: " + result.getUserName());
-                	return result;
-                }).thenApply(result -> chatClient.enterToRoom(userName, "Movies")).
-                thenApply(restult -> { 
-                	log.info("Enter room resultL " + restult.get);
-                	return restult;
+                	CompletableFuture<DataEvent> future = chatClient.enterToRoom(result.getUserName(), "Movies");
+                	return future;
                 });
+                
+                enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.getRoom()));
+                
+                
+                
+//                CompletableFuture<CompletableFuture<DataEvent>> enterToRoomFuture = createUserFuture.thenApply(result -> { 
+//                	log.info("Create user result: " + result.getUserName());
+//                	CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, "Movies");
+//                	return future;
+//                });
+//                
+//                enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.))
+                
+                
+                
+                
+//                createUserFuture.thenCompose(result -> { 
+//                	CompletableFuture<DataEvent> cF = new CompletableFuture<>();
+//                	return result;
+//                });
+                
+//                CompletableFuture<DataEvent> thenApply = future.thenApply(result -> {
+//                	log.info("Create user result: " + result.getUserName());
+//                	return result;
+//                });
+                
+//                .thenApply(result -> chatClient.enterToRoom(userName, "Movies")).
+//                thenCompose(restult -> { 
+//                	log.info("Enter room resultL " + restult.get);
+//                	return restult;
+//                });
                 	
+                
 //                CompletableFuture<ChatEvent> enterToRoomFuture = chatClient.enterToRoom("Movies");
 //                
 //                enterToRoomFuture.thenApply(result -> {
