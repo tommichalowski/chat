@@ -47,13 +47,15 @@ public class App {
                 
                 enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.getRoom()));
                 
+                log.info("I'm still ready to work!!!\n");
+                
+                
 //                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
 //                futureMessage.thenApply(result -> {
 //                	log.info("Message result: " + result.getMessage());
 //                	return result;
 //                });
-                
-                log.info("I'm still ready to work!!!\n");
+                 
 
 //                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
 //                	System.exit(0);

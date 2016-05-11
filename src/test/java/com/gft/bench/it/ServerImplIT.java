@@ -27,11 +27,7 @@ public class ServerImplIT {
 
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
-    
-    //private BrokerService broker = null;
-//    private Server server;
-//    private ChatClient chatClient;
-        
+       
     
     private BrokerService startBroker() throws Exception {
     	
@@ -39,9 +35,6 @@ public class ServerImplIT {
     	broker.setBrokerId("AMQ-BROKER-TEST");
     	broker.setDeleteAllMessagesOnStartup(true);
     	broker.addConnector(BROKER_URL);
-    	
-    	log.info(broker.getCurrentConnections());
-    	log.info(broker.isStarted());
     	broker.start();
     	return broker;
     }
@@ -80,7 +73,7 @@ public class ServerImplIT {
     
     
     @Test
-    public void createUserShouldReturnErrorStatus() throws Exception {
+    public void createUserShouldReturnErrorStatusDueToNotUniqueUserName() throws Exception {
     	
     	BrokerService broker = startBroker();
     	
@@ -106,27 +99,32 @@ public class ServerImplIT {
     }
     
     
-//    @Test
-//    public void enteringToNewRoomShouldResultWithSuccessStatus() throws Exception {
-//
-//        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-//        @SuppressWarnings("unused")
-//		Server server = new ServerImpl(serverEndpoint);
-//        
-//        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-//        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
-//
-//        String room = "Music";
-//        ResultMsg enterToRoomResult = chatClient.enterToRoom(room);
-//
-//        Assert.assertEquals("Should respond with create room success request result.",       
-//        		            RequestResult.SUCCESS, enterToRoomResult.getResult());
-//        
-//        Assert.assertThat("Should have responded with expected message.",
-//        		          enterToRoomResult.getMessage(), containsString(Server.NEW_ROOM_CREATED + room));
-//    }
-//    
-//    
+    @Test
+    public void enteringToNewRoomShouldResultWithSuccessStatus() throws Exception {
+
+    	BrokerService broker = startBroker();
+    	
+        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+		Server server = new ServerImpl(serverEndpoint);
+        
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+
+        String room = "Music";
+        String userName = "Ania";
+        CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, room);
+        
+        DataEvent result = future.get();
+
+        log.info("Room history: " + result.getData());
+        Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
+        
+        chatClient.stopClient();
+        server.stopServer();
+        stopBrokerIfRunning(broker);
+    }
+    
+    
 //    @Test
 //    public void enteringToNewRoomShouldResultWithErrorStatus() throws Exception {
 //        

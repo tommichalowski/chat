@@ -1,9 +1,9 @@
 package com.gft.bench.server;
 
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import javax.jms.JMSException;
 
@@ -25,24 +25,16 @@ import com.gft.bench.exceptions.ChatException;
 public class ServerImpl implements Server {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
-
+    private static final int ROOM_HISTORY_MAX_SIZE = 10;
     private ServerEndpoint chatEndpoint;
-    private Map<String, LinkedList<String>> roomsHistory = new TreeMap<String, LinkedList<String>>();
-//    private Map<String, ArrayList> roomsHistory = new TreeMap<String, ArrayList>();
+    private ConcurrentHashMap<String, LinkedList<String>> roomsHistory = new ConcurrentHashMap<String, LinkedList<String>>();
+    private ConcurrentSkipListSet<String> usersLogins = new ConcurrentSkipListSet<>();
 
 
     public ServerImpl(ServerEndpoint chatEndpoint) {
         this.chatEndpoint = chatEndpoint;
         chatEndpoint.setEventListener(this);
         chatEndpoint.listenForEvent();
-
-        //temp
-        //addRoom("Movies");
-        //LinkedList<String> history = roomsHistory.get("Movies");
-        //history.add("Tom: This is first test message!");
-        //history.add("Jessica: Nice this one is second :)");
-        //history.add("Tom: fantastic !!!");
-        //history.pollFirst();
     }
 
 
@@ -50,24 +42,25 @@ public class ServerImpl implements Server {
     public void eventReceived(DataEvent event) {
 
     	log.info("eventReceived thread: " + Thread.currentThread().getId());
-    	log.info("event type: " + event.getType());
     	
     	if (event.getType() == EventType.CREATE_USER) {
     		MessageEvent messageEvent = (MessageEvent) event;
     		log.info("Creating user: " + messageEvent.getUserName());
-//    		try {
-//				TimeUnit.SECONDS.sleep(6);
-//			} catch (InterruptedException e) {}
-    		messageEvent.setResult(RequestResult.SUCCESS);
+    		boolean addedNewUser = usersLogins.add(messageEvent.getUserName());
+    		if (addedNewUser) {
+    			messageEvent.setResult(RequestResult.SUCCESS);
+    		} else {
+    			messageEvent.setResult(RequestResult.ERROR);
+    		}   		
     		chatEndpoint.sendEvent(messageEvent);
     		
     	} else if (event.getType() == EventType.ENTER_ROOM) {
     		MessageEvent messageEvent = (MessageEvent) event;
-            String room = messageEvent.getRoom();
-            log.info("\nCreating room: " + room);
-            addRoom(room);
-
-            //LinkedList<String> roomHistory = getRoomHistory(room);
+    		
+    		//TODO: check if userName exist or put it in documentation???
+            log.info("\nCreating room: " + messageEvent.getRoom() + ", by user: " + messageEvent.getUserName());
+            LinkedList<String> roomHistory = addRoom(messageEvent.getRoom(), messageEvent.getUserName());
+            messageEvent.setData(formatRoomHistory(roomHistory));
             messageEvent.setResult(RequestResult.SUCCESS);
             chatEndpoint.sendEvent(messageEvent);
 
@@ -81,18 +74,7 @@ public class ServerImpl implements Server {
         }
     }
     
-
-    @Override
-    public void stopServer() throws ChatException { 
-    	try {
-    		log.info("Stopping server.");
-			chatEndpoint.cleanup();
-			log.info("Server stopped.");
-		} catch (JMSException e) {
-			throw new ChatException(e);
-		}
-    }
-
+    
     @Override
     public LinkedList<String> getRoomHistory(String room) {
         return roomsHistory.get(room);
@@ -104,16 +86,51 @@ public class ServerImpl implements Server {
     }
 
     @Override
-    public void addRoom(String name) {
+    public LinkedList<String> addRoom(String room, String userName) {
     	
-        if (roomsHistory.containsKey(name)) {
-            LinkedList<String> roomHistory = roomsHistory.get(name);
-            roomHistory.add(NEW_PERSON_JOINED + name);
-        } else {
-            LinkedList<String> roomHistory = new LinkedList<>();
-            roomHistory.add(NEW_ROOM_CREATED + name);
-            roomsHistory.put(name, roomHistory);
-        }
+    	//roomsHistory.putIfAbsent
+    	synchronized (roomsHistory) {
+    		LinkedList<String> roomHistory;
+	        if (roomsHistory.containsKey(room)) {
+	            roomHistory = roomsHistory.get(room);  
+	            roomHistory.add(userName + NEW_PERSON_JOINED + room);
+	            maintainRoomHistorySize(roomHistory);
+	        } else {
+	            roomHistory = new LinkedList<>();
+	            roomHistory.add(userName + NEW_ROOM_CREATED + room);
+	            roomsHistory.put(room, roomHistory);
+	        }
+	        
+	        return roomHistory;
+		}
+    }
+    
+    
+    @Override
+    public void stopServer() throws ChatException { 
+    	try {
+    		log.info("Stopping server.");
+			chatEndpoint.cleanup();
+			log.info("Server stopped.");
+		} catch (JMSException e) {
+			throw new ChatException(e);
+		}
+    }
+    
+    
+    private void maintainRoomHistorySize(LinkedList<String> roomHistory) {
+    	if (roomHistory != null && roomHistory.size() >= ROOM_HISTORY_MAX_SIZE) {
+        	roomHistory.remove();
+    	}
+    }
+    
+    private String formatRoomHistory(LinkedList<String> roomHistory) {
+    	//String.valueOf(roomHistory);
+    	StringBuffer history = new StringBuffer();
+    	for (String str : roomHistory) {
+    		history = history.append(str + "\n");
+    	}
+    	return history.toString();
     }
 
 }

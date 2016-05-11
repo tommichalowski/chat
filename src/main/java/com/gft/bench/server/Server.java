@@ -8,8 +8,8 @@ import com.gft.bench.exceptions.ChatException;
 
 public interface Server extends ChatEventListener {
 
-    public static final String NEW_ROOM_CREATED = "New room has been created: ";
-    public static final String NEW_PERSON_JOINED = "New person has joined room: ";
+    public static final String NEW_ROOM_CREATED = " has created new room: ";
+    public static final String NEW_PERSON_JOINED = " has joined to room: ";
 
     void stopServer() throws ChatException;;
 
@@ -17,5 +17,5 @@ public interface Server extends ChatEventListener {
 
 	Set<String> getRooms();
 
-    void addRoom(String name);
+	LinkedList<String> addRoom(String room, String userName);
 }
