@@ -57,11 +57,16 @@ public class ServerImpl implements Server {
     	} else if (event.getType() == EventType.ENTER_ROOM) {
     		MessageEvent messageEvent = (MessageEvent) event;
     		
-    		//TODO: check if userName exist or put it in documentation???
-            log.info("\nCreating room: " + messageEvent.getRoom() + ", by user: " + messageEvent.getUserName());
-            LinkedList<String> roomHistory = addRoom(messageEvent.getRoom(), messageEvent.getUserName());
-            messageEvent.setData(formatRoomHistory(roomHistory));
-            messageEvent.setResult(RequestResult.SUCCESS);
+    		synchronized (usersLogins) { //added due to check if userName exist when creating room
+	    		if (usersLogins.contains(messageEvent.getUserName())) {
+		            log.info("\nCreating room: " + messageEvent.getRoom() + ", by user: " + messageEvent.getUserName());
+		            LinkedList<String> roomHistory = addRoom(messageEvent.getRoom(), messageEvent.getUserName());
+		            messageEvent.setData(formatRoomHistory(roomHistory));
+		            messageEvent.setResult(RequestResult.SUCCESS);
+	    		} else {
+	    			messageEvent.setResult(RequestResult.ERROR);
+	    		}
+			}
             chatEndpoint.sendEvent(messageEvent);
 
         } else if (event.getType() == EventType.MESSAGE) {
@@ -116,6 +121,11 @@ public class ServerImpl implements Server {
 			throw new ChatException(e);
 		}
     }
+    
+    
+//    private boolean doesUserExists(String userName) {
+//    	usersLogins.contains(userName);
+//    }
     
     
     private void maintainRoomHistorySize(LinkedList<String> roomHistory) {

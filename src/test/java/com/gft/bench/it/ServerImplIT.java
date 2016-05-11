@@ -112,16 +112,49 @@ public class ServerImplIT {
 
         String room = "Music";
         String userName = "Ania";
-        CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, room);
-        
+        CompletableFuture<DataEvent> future = chatClient.createUser(userName);
         DataEvent result = future.get();
-
-        log.info("Room history: " + result.getData());
+        
+        future = chatClient.enterToRoom(userName, room);
+        result = future.get();
+        
+        log.info("Room history: \n" + result.getData());
         Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
         
         chatClient.stopClient();
         server.stopServer();
         stopBrokerIfRunning(broker);
+    }
+    
+    
+    @Test
+    public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
+    	
+    	BrokerService broker = null;
+    	Server server = null;
+    	ChatClient chatClient = null;
+    	
+    	try {
+	    	broker = startBroker();
+	    	
+	        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+			server = new ServerImpl(serverEndpoint);
+	        
+	        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+	        chatClient = new ChatClientImpl(clientEndpoint);
+	
+	        String room = "Music";
+	        String userName = "Ania";
+	        CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, room);
+	        DataEvent result = future.get();
+	        
+	        Assert.assertEquals(RequestResult.ERROR, result.getResult());	
+		} finally {
+			chatClient.stopClient();
+	        server.stopServer();
+	        stopBrokerIfRunning(broker);
+		}
+        
     }
     
     
