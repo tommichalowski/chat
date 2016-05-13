@@ -1,13 +1,17 @@
 package com.gft.bench.it;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.gft.bench.Disposer;
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
 import com.gft.bench.client.ClientEnpointFactory;
@@ -27,89 +31,97 @@ public class ServerImplIT {
 
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
-       
+    private ArrayList<AutoCloseable> disposables;   
+    
+    
+    @Before
+    public void initialize() {
+    	disposables = new ArrayList<>();
+    }
+    
+    @After
+    public void dispose() throws Exception {
+    	for (AutoCloseable aCloseable : disposables) {
+    		aCloseable.close();
+    	}
+    	disposables = null;    	
+    }
     
     private BrokerService startBroker() throws Exception {
     	
     	BrokerService broker = new BrokerService();
+    	Disposer brokerDisposer = new Disposer(() -> broker.stop());
+    	disposables.add(brokerDisposer);
+    	
     	broker.setBrokerId("AMQ-BROKER-TEST");
     	broker.setDeleteAllMessagesOnStartup(true);
     	broker.addConnector(BROKER_URL);
     	broker.start();
     	return broker;
     }
-    
-    private void stopBrokerIfRunning(BrokerService broker) throws Exception {
-		
-    	if (broker != null && broker.isStarted()) {
-			broker.stop();
-		}
-    }
 
     
     @Test
     public void createUserShouldReturnSuccessStatus() throws Exception {
     	
-    	BrokerService broker = startBroker();
+    	startBroker();
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
 		Server server = new ServerImpl(serverEndpoint);
+		disposables.add(() -> server.stopServer());
         
-        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+        disposables.add(() -> chatClient.stopClient());
         
         String userName = "Tomasz_Test";
-        CompletableFuture<DataEvent> future = chatClient1.createUser(userName);
+        CompletableFuture<DataEvent> future = chatClient.createUser(userName);
 
         DataEvent result = future.get();
 
         Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
         Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
-                
-        chatClient1.stopClient();
-        server.stopServer();
-        stopBrokerIfRunning(broker);
     }
     
     
     @Test
     public void createUserShouldReturnErrorStatusDueToNotUniqueUserName() throws Exception {
     	
-    	BrokerService broker = startBroker();
+    	startBroker();
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
 		Server server = new ServerImpl(serverEndpoint);
+		disposables.add(() -> server.stopServer());
         
-        ClientEndpoint clientEndpoint1 = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-        ChatClient chatClient1 = new ChatClientImpl(clientEndpoint1);
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+        disposables.add(() -> chatClient.stopClient());
         
         String userName = "Tomasz_Test";
         
-        CompletableFuture<DataEvent> futureUser1 = chatClient1.createUser(userName);
+        CompletableFuture<DataEvent> futureUser1 = chatClient.createUser(userName);
         futureUser1.get();
         
-        CompletableFuture<DataEvent> futureUser2 = chatClient1.createUser(userName);
+        CompletableFuture<DataEvent> futureUser2 = chatClient.createUser(userName);
         DataEvent result2 = futureUser2.get();
 
         Assert.assertEquals(RequestResult.ERROR, result2.getResult());
-                
-        chatClient1.stopClient();
-        server.stopServer();
-        stopBrokerIfRunning(broker);
     }
     
     
     @Test
     public void enteringToNewRoomShouldResultWithSuccessStatus() throws Exception {
 
-    	BrokerService broker = startBroker();
+    	startBroker();
     	
         ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
 		Server server = new ServerImpl(serverEndpoint);
-        
+		disposables.add(() -> server.stopServer());
+		
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
         ChatClient chatClient = new ChatClientImpl(clientEndpoint);
-
+        disposables.add(() -> chatClient.stopClient());
+        
         String room = "Music";
         String userName = "Ania";
         CompletableFuture<DataEvent> future = chatClient.createUser(userName);
@@ -120,40 +132,34 @@ public class ServerImplIT {
         
         log.info("Room history: \n" + result.getData());
         Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
-        
-        chatClient.stopClient();
-        server.stopServer();
-        stopBrokerIfRunning(broker);
     }
     
     
     @Test
     public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
+
+    	//Server server = null;
+    	//ChatClient chatClient = null;
     	
-    	BrokerService broker = null;
-    	Server server = null;
-    	ChatClient chatClient = null;
-    	
-    	try {
-	    	broker = startBroker();
+    	//try {
+	    	startBroker();
 	    	
 	        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-			server = new ServerImpl(serverEndpoint);
-	        
+	        Server server = new ServerImpl(serverEndpoint);
+			disposables.add(() -> server.stopServer());
+			
 	        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-	        chatClient = new ChatClientImpl(clientEndpoint);
-	
+	        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+	        disposables.add(() -> chatClient.stopClient());
+	        
 	        String room = "Music";
 	        String userName = "Ania";
 	        CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, room);
 	        DataEvent result = future.get();
 	        
 	        Assert.assertEquals(RequestResult.ERROR, result.getResult());	
-		} finally {
-			chatClient.stopClient();
-	        server.stopServer();
-	        stopBrokerIfRunning(broker);
-		}
+		//} finally {
+		//}
         
     }
     
