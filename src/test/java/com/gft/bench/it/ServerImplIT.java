@@ -138,10 +138,6 @@ public class ServerImplIT {
     @Test
     public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
 
-    	//Server server = null;
-    	//ChatClient chatClient = null;
-    	
-    	//try {
 	    	startBroker();
 	    	
 	        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
@@ -157,12 +153,9 @@ public class ServerImplIT {
 	        CompletableFuture<DataEvent> future = chatClient.enterToRoom(userName, room);
 	        DataEvent result = future.get();
 	        
-	        Assert.assertEquals(RequestResult.ERROR, result.getResult());	
-		//} finally {
-		//}
-        
+	        Assert.assertEquals(RequestResult.ERROR, result.getResult());	   
     }
-    
+
     
 //    @Test
 //    public void enteringToNewRoomShouldResultWithErrorStatus() throws Exception {
