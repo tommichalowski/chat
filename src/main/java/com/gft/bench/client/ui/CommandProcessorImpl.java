@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.RequestResult;
 
 public class CommandProcessorImpl implements CommandProcessor {
 
@@ -17,7 +16,6 @@ public class CommandProcessorImpl implements CommandProcessor {
 	
 	Display display = new DisplayImpl(System.in, System.out);
 	ChatClient chatClient;
-	UIEventType expectedEventType = null;
 	
 	
 	public CommandProcessorImpl(ChatClient chatClient) {
@@ -34,8 +32,7 @@ public class CommandProcessorImpl implements CommandProcessor {
 			CompletableFuture<DataEvent> future = null; 	
 			
 			while (true) {
-				UIEvent event = display.handleInput(expectedEventType);
-				expectedEventType = null;
+				UIEvent event = display.handleInput();
 				UIEventType eventType = event.eventType;
 				String msg = event.message;	
 				
@@ -52,13 +49,16 @@ public class CommandProcessorImpl implements CommandProcessor {
 				future.thenAccept(result -> {
 					log.info("Result: " + result.getResult());
 					display.print(result.getData());
-					if (result.getResult() == RequestResult.ERROR) {
-						expectedEventType = eventType;
-					}
 				});
 			}
 		});
 		
+	}
+
+
+	@Override
+	public void print(String message) {
+		display.print(message);
 	}
 	
 }

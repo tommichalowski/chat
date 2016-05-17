@@ -12,6 +12,7 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.ResultMsg;
@@ -20,7 +21,7 @@ import com.gft.bench.exceptions.ChatException;
 /**
  * Created by tzms on 3/25/2016.
  */
-public class ChatClientImpl implements ChatClient, ChatEventListener {
+public class ChatClientImpl implements ChatClient, ChatEventListener, EventListener {
 
 	private static final Log log = LogFactory.getLog(ChatClientImpl.class);
     private static final String BROKER_URL = "tcp://localhost:61616";
@@ -47,10 +48,10 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      */
     public ChatClientImpl(ClientEndpoint endpoint) {
 		this.clientEndpoint = endpoint; 
-		clientEndpoint.setEventListener(this);
+		//clientEndpoint.setEventListener(this);
 	    clientEndpoint.listenForEvent(); 
     }
-    
+           
     
 	@Override
 	public CompletableFuture<DataEvent> createUser(String userName) {
@@ -77,7 +78,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
         clientEndpoint.sendEvent(event);
     }
     
-    
+
     private CompletableFuture<DataEvent> requestAsync(DataEvent event) {
     	
     	CompletableFuture<DataEvent> future = new CompletableFuture<DataEvent>();
@@ -87,6 +88,19 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		return future;
     }
     
+    
+	@Override
+	public <T> void onEvent(T event) {
+		// TODO: call this method in ClientEndpoint when message came on onMessage. 
+		// Check and inform all interested listeners
+		
+	}
+    
+	@Override
+	public <T> void registerListener(T event, EventListener listener) {
+		// TODO: register listener for some event type
+	}
+	
 
     @Override
     public void asyncEventReceived(DataEvent event) {
@@ -114,7 +128,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public ResultMsg exitRoom(String room) {
         return null;
     }
-    
+
     
     @Override
     public void stopClient() throws ChatException { 
@@ -124,6 +138,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 			throw new ChatException(e);
 		}
     }
+
    
     
 //	private CompletableFuture<ChatEvent> requestResponse(ChatEvent event) {

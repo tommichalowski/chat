@@ -143,4 +143,10 @@ public class ServerImpl implements Server {
     	return history.toString();
     }
 
+
+	@Override
+	public void messageReceived(DataEvent event) {
+		// TODO Auto-generated method stub
+	}
+
 }

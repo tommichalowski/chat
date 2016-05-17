@@ -7,17 +7,17 @@ import javax.jms.MessageListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.EventListener;
 
 public class ClientMessageListener implements MessageListener {
 
 	private static final Log log = LogFactory.getLog(ClientMessageListener.class);
-	ChatEventListener messageListener;
+	EventListener eventListener;
 	
 	
-	public ClientMessageListener(ChatEventListener messageListener) {
-		this.messageListener = messageListener;
+	public ClientMessageListener(EventListener eventListener) {
+		this.eventListener = eventListener;
 	}
 	
 	
@@ -26,14 +26,12 @@ public class ClientMessageListener implements MessageListener {
 		
 		try {
 			DataEvent event = EventBuilderUtil.buildEvent(message);
-			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
-			messageListener.messageReceived(event);
+			//log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
+			eventListener.onEvent(event);
 		} catch (JMSException e) {
 			log.error("\nOnMessage ERROR in client!\n\n\n");
 			e.printStackTrace();
 		}
-		
 	}
 
-	
 }

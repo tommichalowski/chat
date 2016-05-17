@@ -21,6 +21,7 @@ import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.notification.RoomChanged;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -110,7 +111,7 @@ public class ServerImplIT {
     
     
     @Test
-    public void enteringToNewRoomShouldResultWithSuccessStatus() throws Exception {
+    public void enteringToNewRoomShouldResultWithRoomChangedNotification() throws Exception {
 
     	startBroker();
     	
@@ -119,17 +120,21 @@ public class ServerImplIT {
 		disposables.add(() -> server.stopServer());
 		
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+        ChatClientImpl chatClient = new ChatClientImpl(clientEndpoint);
         disposables.add(() -> chatClient.stopClient());
+        
+        //ClientMessageListener listener = new ClientMessageListener(chatClient);
+        chatClient.registerListener(RoomChanged.class, chatClient);
         
         String room = "Music";
         String userName = "Ania";
         CompletableFuture<DataEvent> future = chatClient.createUser(userName);
         DataEvent result = future.get();
         
-        future = chatClient.enterToRoom(userName, room);
-        result = future.get();
+        chatClient.enterToRoom(userName, room);
         
+        //TODO: check if RoomChanged event came on onEvent method in chatClient
+                
         log.info("Room history: \n" + result.getData());
         Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
     }

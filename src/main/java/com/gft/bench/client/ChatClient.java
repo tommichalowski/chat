@@ -3,6 +3,7 @@ package com.gft.bench.client;
 import java.util.concurrent.CompletableFuture;
 
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.EventListener;
 import com.gft.bench.events.ResultMsg;
 import com.gft.bench.exceptions.ChatException;
 
@@ -22,7 +23,9 @@ public interface ChatClient {
      */
 	//ResultMsg enterToRoom(String room);
 	
-	//void OnMessage<T>(Listener l); //TODO: możliwośc zapisania się tu na message biznesowy
+	//void onMessage<T>(Listener l); //TODO: możliwośc zapisania się tu na message biznesowy
+ 
+	<T> void registerListener(T event, EventListener listener);
 	
 	CompletableFuture<DataEvent> createUser(String userName);
 	

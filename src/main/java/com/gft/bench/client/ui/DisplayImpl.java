@@ -21,16 +21,10 @@ public class DisplayImpl implements Display {
     	scanner = new Scanner(inputStream);
     	printer = printStream;
     }
-
-    
-    @Override
-	public UIEvent handleInput() {
-    	return handleInput(null);
-    }
     
     
     @Override
-    public UIEvent handleInput(UIEventType expectedEventType) {
+    public UIEvent handleInput() {
     	
     	String str = scanner.nextLine();
     	
@@ -40,8 +34,6 @@ public class DisplayImpl implements Display {
     	UIEventType userEventType = UIEventType.valueOf(str.toUpperCase()); //TODO: check 
         if (userEventType != null) {
         	uiEvent.eventType = userEventType;
-        } else if (expectedEventType != null) {
-        	uiEvent.eventType = expectedEventType;
         } else {
 			uiEvent.eventType = UIEventType.MESSAGE;
 		}

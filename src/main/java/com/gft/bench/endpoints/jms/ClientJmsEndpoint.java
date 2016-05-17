@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.EventListener;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -33,6 +34,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     MessageProducer producer;
     private Destination clientMessageQueue;
     protected ChatEventListener messageListener;
+    private EventListener eventListener;
 
     
     public ClientJmsEndpoint(String brokerUrl) throws ChatException {
@@ -56,6 +58,11 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
         this.messageListener = messageListener;
     }
     
+	@Override
+	public void setEventListener(EventListener listener) {
+		this.eventListener = listener;
+	}
+    
     
     @Override
     public void listenForEvent() {
@@ -76,6 +83,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 			DataEvent event = EventBuilderUtil.buildEvent(message);
 			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
 			messageListener.asyncEventReceived(event);
+			//eventListener.onEvent(event, listener);
 		} catch (JMSException e) {
 			log.error("\nOnMessage ERROR in client!\n\n\n");
 			e.printStackTrace();
@@ -98,7 +106,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
             e.printStackTrace();
         }
     }
-    
+
     
     @Override
     public void cleanup() throws JMSException {
