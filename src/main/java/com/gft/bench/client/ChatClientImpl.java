@@ -70,6 +70,14 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	}
 	
     
+    @Override
+    public void sendMessageToRoom(String userName, String room, String message) {
+       
+    	MessageEvent event = new MessageEvent(EventType.MESSAGE, userName, room, message);
+        clientEndpoint.sendEvent(event);
+    }
+    
+    
     private CompletableFuture<DataEvent> requestAsync(DataEvent event) {
     	
     	CompletableFuture<DataEvent> future = new CompletableFuture<DataEvent>();
@@ -79,20 +87,9 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		return future;
     }
     
-    
-    
-    
-//    @Override
-//    public CompletableFuture<DataEvent> sendMessageToRoom(String room, String message) {
-//        MessageEvent event = new MessageEvent(EventType.MESSAGE, message, room);
-//        CompletableFuture<DataEvent> future = clientEndpoint.request(event);
-//        futureMessageMap.put("MessageId", future);
-//        return future;
-//    }
-	
 
     @Override
-    public void eventReceived(DataEvent event) {
+    public void asyncEventReceived(DataEvent event) {
     	
     	for (String eventId : futureMessageMap.keySet()) {
     		log.info("Future map keys: " + eventId);
@@ -104,6 +101,12 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		        completableFuture.complete(event);
 	        }
     	}
+    }
+    
+    
+    @Override
+    public void messageReceived(DataEvent event) {
+    	
     }
        
 

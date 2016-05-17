@@ -1,7 +1,5 @@
 package com.gft.bench;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.jms.JMSException;
 
 import org.apache.commons.logging.Log;
@@ -9,8 +7,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
 import com.gft.bench.client.ChatClientImpl;
+import com.gft.bench.client.ui.CommandProcessor;
+import com.gft.bench.client.ui.CommandProcessorImpl;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
-import com.gft.bench.events.DataEvent;
 import com.gft.bench.exceptions.ChatException;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -34,46 +33,23 @@ public class App {
         } else {
             try {
                 ChatClient chatClient = new ChatClientImpl();
+                CommandProcessor cp = new CommandProcessorImpl(chatClient);
+                cp.processCommands();
                 
-                String userName = "Tomi";
-                
-                CompletableFuture<DataEvent> createUserFuture = chatClient.createUser(userName);
-                
-                CompletableFuture<DataEvent> enterToRoomFuture = createUserFuture.thenCompose(result -> { 
-                	log.info("Create user result: " + result.getUserName());
-                	CompletableFuture<DataEvent> future = chatClient.enterToRoom(result.getUserName(), "Movies");
-                	return future;
-                });
-                
-                enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.getRoom()));
-                
-                log.info("I'm still ready to work!!!\n");
-                
-                
-//                CompletableFuture<ChatEvent> futureMessage = chatClient.sendMessageToRoom("Movies", "This is my message.");
-//                futureMessage.thenApply(result -> {
-//                	log.info("Message result: " + result.getMessage());
-//                	return result;
+//                String userName = "Tomi";
+//                
+//                CompletableFuture<DataEvent> createUserFuture = chatClient.createUser(userName);
+//                
+//                CompletableFuture<DataEvent> enterToRoomFuture = createUserFuture.thenCompose(result -> { 
+//                	log.info("Create user result: " + result.getUserName());
+//                	CompletableFuture<DataEvent> future = chatClient.enterToRoom(result.getUserName(), "Movies");
+//                	return future;
 //                });
-                 
+//                
+//                enterToRoomFuture.thenAccept(event -> log.info("Enter to room result: " + event.getRoom()));
+//                
+//                log.info("I'm still ready to work!!!\n");
 
-//                if (enterToRoomResult.getResult() == RequestResult.ERROR) {
-//                	System.exit(0);
-//                }
-                
-              //  CmdLineTool cmd = new CmdLineTool();
-
-              //  while (true) {
-                  //  ResultMsg resultMsg = cmd.readLine();
-
-                   // if (ResultType.NORMAL.equals(resultMsg.getResult())) {
-                    //    chatClient.sendMessageToRoom("Movies", resultMsg.getMessage());
-                   // } else if (ResultType.EXIT.equals(resultMsg.getResult())) {
-//                      chatClient.close();
-                   //     System.exit(0);
-                   // }
-
-              //  }
             } catch (ChatException e) {
                 log.error(e.getStackTrace());
                 System.exit(0);

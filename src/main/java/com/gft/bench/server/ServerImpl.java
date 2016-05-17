@@ -39,7 +39,7 @@ public class ServerImpl implements Server {
 
 
     @Override
-    public void eventReceived(DataEvent event) {
+    public void asyncEventReceived(DataEvent event) {
 
     	log.info("eventReceived thread: " + Thread.currentThread().getId());
     	

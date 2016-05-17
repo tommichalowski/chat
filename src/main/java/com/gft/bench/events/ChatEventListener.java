@@ -7,7 +7,9 @@ public interface ChatEventListener {
 
 	//void listenForEvents() throws JMSException;
 
-	void eventReceived(DataEvent event);
+	void asyncEventReceived(DataEvent event);
+	
+	void messageReceived(DataEvent event);
 	
     //void onEvent(ChatEvent event) throws JMSException;
 }

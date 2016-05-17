@@ -75,7 +75,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 		try {
 			DataEvent event = EventBuilderUtil.buildEvent(message);
 			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
-			messageListener.eventReceived(event);
+			messageListener.asyncEventReceived(event);
 		} catch (JMSException e) {
 			log.error("\nOnMessage ERROR in client!\n\n\n");
 			e.printStackTrace();

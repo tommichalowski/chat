@@ -10,13 +10,13 @@ import com.gft.bench.events.DataEvent;
  */
 public interface ClientEndpoint {
 
-    void listenForEvent();
+    void listenForEvent(); //TODO: shouldn't exist
     
     void sendEvent(DataEvent event);
     
     void setEventListener(ChatEventListener messageListener);
     
-    void cleanup() throws JMSException;
+    void cleanup() throws JMSException; //TODO: shouldn't exist
 }
 
 //<TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request);

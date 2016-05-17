@@ -80,7 +80,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     public void onMessage(Message message) {
         try {
     		DataEvent event = EventBuilderUtil.buildEvent(message);
-    		messageListener.eventReceived(event);
+    		messageListener.asyncEventReceived(event);
         } catch (JMSException e) {
             e.printStackTrace();
         }
