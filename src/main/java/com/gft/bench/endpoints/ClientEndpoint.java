@@ -4,7 +4,6 @@ import javax.jms.JMSException;
 
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EventListener;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -13,7 +12,7 @@ public interface ClientEndpoint {
 
     void sendEvent(DataEvent event);
     void setEventListener(ChatEventListener messageListener);
-    void setEventListener(EventListener listener);
+//    void setEventListener(EventListener listener);
     
     void listenForEvent(); //TODO: shouldn't exist
     void cleanup() throws JMSException; //TODO: shouldn't exist

@@ -16,12 +16,13 @@ import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.ResultMsg;
+import com.gft.bench.events.notification.RoomChanged;
 import com.gft.bench.exceptions.ChatException;
 
 /**
  * Created by tzms on 3/25/2016.
  */
-public class ChatClientImpl implements ChatClient, ChatEventListener, EventListener {
+public class ChatClientImpl implements ChatClient, ChatEventListener, EventListener<RoomChanged> {
 
 	private static final Log log = LogFactory.getLog(ChatClientImpl.class);
     private static final String BROKER_URL = "tcp://localhost:61616";
@@ -48,7 +49,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener, EventListe
      */
     public ChatClientImpl(ClientEndpoint endpoint) {
 		this.clientEndpoint = endpoint; 
-		//clientEndpoint.setEventListener(this);
+		clientEndpoint.setEventListener(this);
 	    clientEndpoint.listenForEvent(); 
     }
            
@@ -90,16 +91,28 @@ public class ChatClientImpl implements ChatClient, ChatEventListener, EventListe
     
     
 	@Override
-	public <T> void onEvent(T event) {
-		// TODO: call this method in ClientEndpoint when message came on onMessage. 
-		// Check and inform all interested listeners
+	public void onEvent(RoomChanged event) {
+		// TODO Auto-generated method stub
 		
 	}
-    
+
 	@Override
-	public <T> void registerListener(T event, EventListener listener) {
-		// TODO: register listener for some event type
+	public <T> void registerListener(T event, EventListener<T> listener) {
+		// TODO Auto-generated method stub
+		
 	}
+	
+//	@Override
+//	public <T> void onEvent(T event) {
+//		// TODO: call this method in ClientEndpoint when message came on onMessage. 
+//		// Check and inform all interested listeners
+//		
+//	}
+//    
+//	@Override
+//	public <T> void registerListener(T event, EventListener listener) {
+//		// TODO: register listener for some event type
+//	}
 	
 
     @Override
@@ -138,8 +151,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener, EventListe
 			throw new ChatException(e);
 		}
     }
-
-   
+  
     
 //	private CompletableFuture<ChatEvent> requestResponse(ChatEvent event) {
 //	

@@ -1,4 +1,4 @@
-package com.gft.bench.endpoints.jms;
+package com.gft.bench.endpoints.jms.listeners;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -7,6 +7,7 @@ import javax.jms.MessageListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.jms.EventBuilderUtil;
 import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EventListener;
 

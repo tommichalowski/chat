@@ -1,8 +1,8 @@
 package com.gft.bench.events;
 
-public interface EventListener {
+public interface EventListener <T> {
 	
-	<T> void onEvent(T event);
+	 void onEvent(T event);
 	
 	//<T extends Event> void onEvent(T event, EventListener listener);
 }

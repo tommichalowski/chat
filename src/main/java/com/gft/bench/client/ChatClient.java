@@ -25,7 +25,7 @@ public interface ChatClient {
 	
 	//void onMessage<T>(Listener l); //TODO: możliwośc zapisania się tu na message biznesowy
  
-	<T> void registerListener(T event, EventListener listener);
+	<T> void registerListener(T event, EventListener<T> listener);
 	
 	CompletableFuture<DataEvent> createUser(String userName);
 	

@@ -2,6 +2,7 @@ package com.gft.bench.it;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
@@ -10,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.gft.bench.Disposer;
 import com.gft.bench.client.ChatClient;
@@ -30,6 +32,7 @@ import com.gft.bench.server.ServerImpl;
  */
 public class ServerImplIT {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -120,23 +123,26 @@ public class ServerImplIT {
 		disposables.add(() -> server.stopServer());
 		
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-        ChatClientImpl chatClient = new ChatClientImpl(clientEndpoint);
+        ChatClientImpl chatClient = Mockito.spy(new ChatClientImpl(clientEndpoint));
         disposables.add(() -> chatClient.stopClient());
         
         //ClientMessageListener listener = new ClientMessageListener(chatClient);
-        chatClient.registerListener(RoomChanged.class, chatClient);
+        RoomChanged event = new RoomChanged();
+        chatClient.registerListener(event, chatClient);
         
         String room = "Music";
         String userName = "Ania";
         CompletableFuture<DataEvent> future = chatClient.createUser(userName);
-        DataEvent result = future.get();
+        future.get();
         
         chatClient.enterToRoom(userName, room);
         
-        //TODO: check if RoomChanged event came on onEvent method in chatClient
-                
-        log.info("Room history: \n" + result.getData());
-        Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
+//        RoomChanged testEvent = new RoomChanged(); 
+//        chatClient.onEvent(testEvent);
+        
+        TimeUnit.SECONDS.sleep(1);
+
+        Mockito.verify(chatClient, Mockito.times(1)).onEvent(Mockito.isA(RoomChanged.class));
     }
     
     

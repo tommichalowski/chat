@@ -17,7 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EventListener;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -34,7 +33,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     MessageProducer producer;
     private Destination clientMessageQueue;
     protected ChatEventListener messageListener;
-    private EventListener eventListener;
+    //private EventListener eventListener;
 
     
     public ClientJmsEndpoint(String brokerUrl) throws ChatException {
@@ -58,10 +57,10 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
         this.messageListener = messageListener;
     }
     
-	@Override
-	public void setEventListener(EventListener listener) {
-		this.eventListener = listener;
-	}
+//	@Override
+//	public void setEventListener(EventListener listener) {
+//		this.eventListener = listener;
+//	}
     
     
     @Override
