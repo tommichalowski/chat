@@ -98,8 +98,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener, EventListe
 
 	@Override
 	public <T> void registerListener(T event, EventListener<T> listener) {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}
 	
 //	@Override
