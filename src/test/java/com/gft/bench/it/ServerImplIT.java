@@ -23,8 +23,8 @@ import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.listeners.RoomChangedListener;
 import com.gft.bench.events.notification.RoomChanged;
-import com.gft.bench.listeners.BusinessEventListener;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -126,13 +126,9 @@ public class ServerImplIT {
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
         ChatClientImpl chatClient = Mockito.spy(new ChatClientImpl(clientEndpoint));
         disposables.add(() -> chatClient.stopClient());
-        
-        //ClientMessageListener listener = new ClientMessageListener(chatClient);
-        RoomChanged event = new RoomChanged();
-//        chatClient.registerListener(event, chatClient);
-        
-        BusinessEventListener listener = Mockito.spy(new BusinessEventListener());
-        chatClient.registerListener(event, listener);
+
+        RoomChangedListener listener = Mockito.spy(new RoomChangedListener());
+        chatClient.registerListener(RoomChanged.class, listener);
         
         String room = "Music";
         String userName = "Ania";
@@ -141,13 +137,11 @@ public class ServerImplIT {
         
         chatClient.enterToRoom(userName, room);
         
-        RoomChanged testEvent = new RoomChanged(); 
-        listener.onEvent(testEvent);
-//        chatClient.onEvent(testEvent);
+//        RoomChanged testEvent = new RoomChanged(); 
+//        listener.onEvent(testEvent);
         
         TimeUnit.SECONDS.sleep(1);
 
-        //Mockito.verify(chatClient, Mockito.times(1)).onEvent(Mockito.isA(RoomChanged.class));
         Mockito.verify(listener, Mockito.times(1)).onEvent(Mockito.isA(RoomChanged.class));
     }
     

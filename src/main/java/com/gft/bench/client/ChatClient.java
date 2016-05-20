@@ -22,10 +22,10 @@ public interface ChatClient {
      * Result contains resulting status and message.
      */
 	//ResultMsg enterToRoom(String room);
+
+	<T> void registerListener(Class<T> clazz, EventListener<T> listener);
 	
-	//void onMessage<T>(Listener l); //TODO: możliwośc zapisania się tu na message biznesowy
- 
-	<T> void registerListener(T event, EventListener<T> listener);
+	<T> void notifyListeners(Class<T> clazz, T event);
 	
 	CompletableFuture<DataEvent> createUser(String userName);
 	

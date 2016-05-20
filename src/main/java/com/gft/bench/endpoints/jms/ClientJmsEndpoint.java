@@ -64,19 +64,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     
     
     @Override
-    public void listenForEvent() {
-        try {
-            clientMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-            MessageConsumer consumer = session.createConsumer(clientMessageQueue);
-            consumer.setMessageListener(this);
-            log.info("Client is listening...");
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    
-    @Override
     public void onMessage(Message message) {
 		try {
 			DataEvent event = EventBuilderUtil.buildEvent(message);
@@ -87,6 +74,19 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 			log.error("\nOnMessage ERROR in client!\n\n\n");
 			e.printStackTrace();
 		}
+    }
+    
+    
+    @Override
+    public void listenForEvent() {
+        try {
+            clientMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+            MessageConsumer consumer = session.createConsumer(clientMessageQueue);
+            consumer.setMessageListener(this);
+            log.info("Client is listening...");
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
     
