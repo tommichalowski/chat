@@ -5,6 +5,7 @@ import java.io.Serializable;
 import javax.jms.JMSException;
 
 import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.exceptions.ChatException;
 
 /**
  * Created by tzms on 3/25/2016.
@@ -12,7 +13,7 @@ import com.gft.bench.events.ChatEventListener;
 public interface ClientEndpoint {
 
     <T extends Serializable> void sendEvent(T event);
-    void setEventListener(ChatEventListener eventListener);
+    void setEventListeners(ChatEventListener eventListener) throws ChatException;
 //    void setEventListener(EventListener listener);
     
     void cleanup() throws JMSException; //TODO: shouldn't exist

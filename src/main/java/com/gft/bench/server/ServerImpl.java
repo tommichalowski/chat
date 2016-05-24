@@ -17,6 +17,10 @@ import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
+import com.gft.bench.events.listeners.business.CreateUserListener;
+import com.gft.bench.events.listeners.business.RoomChangedListener;
 import com.gft.bench.exceptions.ChatException;
 
 
@@ -35,9 +39,13 @@ public class ServerImpl implements Server, ChatEventListener {
     private ConcurrentSkipListSet<String> usersLogins = new ConcurrentSkipListSet<>();
 
 
-    public ServerImpl(ServerEndpoint chatEndpoint) {
+    public ServerImpl(ServerEndpoint chatEndpoint) throws ChatException {
         this.chatEndpoint = chatEndpoint;
-        this.chatEndpoint.setEventListener(this);
+        this.chatEndpoint.setEventListeners(this); 
+        
+        //registerListener(CreateUserEvent.class, new CreateUserListener());
+        //registerListener(RoomChangedEvent.class, new RoomChangedListener());
+        //registerListener(ChatMessageEvent.class, new ChatMessageListener());
     }
 
     
@@ -54,6 +62,14 @@ public class ServerImpl implements Server, ChatEventListener {
 		eventListener.onEvent(event);
 	}
 	
+
+	@Override
+	public <T> EventListener<T> getEventListener(Class<T> clazz) {
+		
+		@SuppressWarnings("unchecked")
+		EventListener<T> eventListener = eventListeners.get(clazz);
+		return eventListener;
+	}
 	
 
     //@Override
@@ -141,11 +157,6 @@ public class ServerImpl implements Server, ChatEventListener {
     }
     
     
-//    private boolean doesUserExists(String userName) {
-//    	usersLogins.contains(userName);
-//    }
-    
-    
     private void maintainRoomHistorySize(LinkedList<String> roomHistory) {
     	if (roomHistory != null && roomHistory.size() >= ROOM_HISTORY_MAX_SIZE) {
         	roomHistory.remove();
@@ -153,18 +164,12 @@ public class ServerImpl implements Server, ChatEventListener {
     }
     
     private String formatRoomHistory(LinkedList<String> roomHistory) {
-    	//String.valueOf(roomHistory);
+
     	StringBuffer history = new StringBuffer();
     	for (String str : roomHistory) {
     		history = history.append(str + "\n");
     	}
     	return history.toString();
     }
-
-
-	@Override
-	public void messageReceived(DataEvent event) {
-		// TODO Auto-generated method stub
-	}
 
 }

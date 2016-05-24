@@ -9,11 +9,7 @@ public interface ChatEventListener {
 	
 	<T> void notifyListeners(Class<T> clazz, T event);
 	
-	//void listenForEvents() throws JMSException;
+	<T> EventListener<T> getEventListener(Class<T> clazz);
 
 	//void asyncEventReceived(DataEvent event);
-	
-	void messageReceived(DataEvent event);
-	
-    //void onEvent(ChatEvent event) throws JMSException;
 }

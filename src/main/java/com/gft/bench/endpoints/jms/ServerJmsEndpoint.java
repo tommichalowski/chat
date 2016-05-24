@@ -50,19 +50,30 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 			connection = connectionFactory.createConnection();
 			connection.start();
 	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	        
-	        createServerReceiveQueue(ChatMessageEvent.class);
+		} catch (JMSException e) {
+			throw new ChatException("Server can NOT create JMS connection!", e);
+		}  
+    }
+    
+    
+	@Override
+	public void setEventListeners(ChatEventListener eventListener) throws ChatException {
+		
+		this.eventListener = eventListener;
+		
+		try {
+			createServerReceiveQueue(ChatMessageEvent.class);
 	        createServerReceiveQueue(CreateUserEvent.class);
 	        createServerReceiveQueue(RoomChangedEvent.class);
-
+	
 	        createServerProducerQueue(ChatMessageEvent.class);
 	        createServerProducerQueue(CreateUserEvent.class);
 	        createServerProducerQueue(RoomChangedEvent.class);
 		} catch (JMSException e) {
-			throw new ChatException("Server can NOT create JMS connection!", e);
+			throw new ChatException("Server can NOT create JMS queues!", e);
 		}
-        
-    }
+	}
+	
 
     @Override
     public void sendEvent(DataEvent event) {
@@ -85,11 +96,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
         }
     }
 
-     
-	@Override
-	public void setEventListener(ChatEventListener eventListener) {
-		this.eventListener = eventListener;
-	}
     
     @Override
     public void cleanup() throws JMSException {

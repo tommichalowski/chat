@@ -56,14 +56,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
         	connection = connectionFactory.createConnection();
 			connection.start();
 	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	        
-        	createClientReceiveQueue(ChatMessageEvent.class);
-        	createClientReceiveTemporaryQueue(CreateUserEvent.class);
-        	createClientReceiveTemporaryQueue(RoomChangedEvent.class);
-
-        	createClientProducerQueue(ChatMessageEvent.class);
-        	createClientProducerQueue(CreateUserEvent.class);
-        	createClientProducerQueue(RoomChangedEvent.class);
 		} catch (JMSException e) {
 			throw new ChatException("Client can NOT create JMS connection!", e);
 		}
@@ -71,8 +63,21 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
     
     @Override
-    public void setEventListener(ChatEventListener eventListener) {
-        this.eventListener = eventListener;
+    public void setEventListeners(ChatEventListener eventListener) throws ChatException {
+        
+    	this.eventListener = eventListener;
+        
+    	try {
+	        createClientReceiveQueue(ChatMessageEvent.class);
+	    	createClientReceiveTemporaryQueue(CreateUserEvent.class);
+	    	createClientReceiveTemporaryQueue(RoomChangedEvent.class);
+	
+	    	createClientProducerQueue(ChatMessageEvent.class);
+	    	createClientProducerQueue(CreateUserEvent.class);
+	    	createClientProducerQueue(RoomChangedEvent.class);
+        } catch (JMSException e) {
+			throw new ChatException("Client can NOT create JMS queues!", e);
+		}
     }
     
 //	@Override

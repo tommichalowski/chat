@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
@@ -52,10 +51,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      * 
      * @param   endpoint   the client endpoint. It can be created using client endpoint factory.
      * It allow to specify transport layer and target URL.
+     * @throws ChatException 
      */
-    public ChatClientImpl(ClientEndpoint endpoint) {
+    public ChatClientImpl(ClientEndpoint endpoint) throws ChatException {
 		this.clientEndpoint = endpoint; 
-		this.clientEndpoint.setEventListener(this);
+		this.clientEndpoint.setEventListeners(this);
     }
            
     
@@ -64,7 +64,6 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		
 		CreateUserEvent event = new CreateUserEvent();
 		event.setData(userName);
-		//DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
 		CompletableFuture<BusinessEvent> future = requestAsync(event);
     	return future;
 	}
@@ -112,6 +111,14 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		EventListener<T> eventListener = eventListeners.get(clazz);
 		eventListener.onEvent(event);
 	}
+	
+	@Override
+	public <T> EventListener<T> getEventListener(Class<T> clazz) {
+		
+		@SuppressWarnings("unchecked")
+		EventListener<T> eventListener = eventListeners.get(clazz);
+		return eventListener;
+	}
 
 	
 
@@ -129,14 +136,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 //	        }
 //    	}
     }
-    
-	
-    
-    @Override
-    public void messageReceived(DataEvent event) {
-    	
-    }
-       
+           
 
     @Override
     public ResultMsg exitRoom(String room) {
