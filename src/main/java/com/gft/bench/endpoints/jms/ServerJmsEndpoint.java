@@ -1,11 +1,11 @@
 package com.gft.bench.endpoints.jms;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
@@ -17,29 +17,52 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.business.BusinessEvent;
+import com.gft.bench.events.business.ChatMessageEvent;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
+import com.gft.bench.events.listeners.jms.JmsMessageListener;
+import com.gft.bench.exceptions.ChatException;
 
 /**
  * Created by tzms on 3/31/2016.
  */
-public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageListener {
+public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 
+	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
+	private static final String SERVER_QUEUE_SUFFIX = "to.server";
     private static final Log log = LogFactory.getLog(ServerJmsEndpoint.class);
     protected final String brokerUrl;
     protected ActiveMQConnectionFactory connectionFactory;
     protected Connection connection;
     protected Session session;
     MessageConsumer messageConsumer;
-    protected ChatEventListener messageListener;
+    protected ChatEventListener eventListener;
+    private ConcurrentHashMap<String, Destination> serverReceivers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, MessageProducer> serverProducers = new ConcurrentHashMap<>();
 
     
-    public ServerJmsEndpoint(String brokerUrl) throws JMSException {
-        this.brokerUrl = brokerUrl;
+    public ServerJmsEndpoint(String brokerUrl) throws ChatException {
+        
+    	this.brokerUrl = brokerUrl;
         connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        connection = connectionFactory.createConnection();
-        connection.start();
-        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-    }
+        try {
+			connection = connectionFactory.createConnection();
+			connection.start();
+	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	        
+	        createServerReceiveQueue(ChatMessageEvent.class);
+	        createServerReceiveQueue(CreateUserEvent.class);
+	        createServerReceiveQueue(RoomChangedEvent.class);
 
+	        createServerProducerQueue(ChatMessageEvent.class);
+	        createServerProducerQueue(CreateUserEvent.class);
+	        createServerProducerQueue(RoomChangedEvent.class);
+		} catch (JMSException e) {
+			throw new ChatException("Server can NOT create JMS connection!", e);
+		}
+        
+    }
 
     @Override
     public void sendEvent(DataEvent event) {
@@ -62,37 +85,12 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
         }
     }
 
+     
+	@Override
+	public void setEventListener(ChatEventListener eventListener) {
+		this.eventListener = eventListener;
+	}
     
-    @Override
-    public void listenForEvent() {
-        try {
-            Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
-            messageConsumer = session.createConsumer(serverMessageQueue);
-            messageConsumer.setMessageListener(this);
-            
-            log.info("Server is listening...");
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onMessage(Message message) {
-        try {
-    		DataEvent event = EventBuilderUtil.buildEvent(message);
-    		messageListener.asyncEventReceived(event);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
-    
-
-    @Override
-    public void setEventListener(ChatEventListener messageListener) {
-        this.messageListener = messageListener;
-    }
-    
-
     @Override
     public void cleanup() throws JMSException {
     	if (messageConsumer != null) {
@@ -105,5 +103,46 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint, MessageLi
     		connection.close();
     	}
     }
+    
+    
+    private <T extends BusinessEvent> void createServerProducerQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
+		MessageProducer producer = session.createProducer(queue);
+		serverProducers.putIfAbsent(clazz.getName(), producer);
+	}
+    
+    private <T extends BusinessEvent> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+		MessageConsumer consumer = session.createConsumer(queue);
+		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+		serverReceivers.putIfAbsent(clazz.getName(), queue);
+	}
+
+    
+//  @Override
+//  public void listenForEvent() {
+//      try {
+//          Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
+//          messageConsumer = session.createConsumer(serverMessageQueue);
+//          messageConsumer.setMessageListener(this);
+//          
+//          log.info("Server is listening...");
+//      } catch (JMSException e) {
+//          e.printStackTrace();
+//      }
+//  }
+    
+    
+//  @Override
+//  public void onMessage(Message message) {
+//      try {
+//  		DataEvent event = EventBuilderUtil.buildEvent(message);
+//  		//messageListener.asyncEventReceived(event);
+//      } catch (JMSException e) {
+//          e.printStackTrace();
+//      }
+//  }
     
 }

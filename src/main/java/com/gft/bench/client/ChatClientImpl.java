@@ -1,5 +1,6 @@
 package com.gft.bench.client;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,6 +17,9 @@ import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.ResultMsg;
+import com.gft.bench.events.business.BusinessEvent;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -28,10 +32,10 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     //private static final int TIMEOUT = 5; 
     
     private ClientEndpoint clientEndpoint;
-    private ConcurrentHashMap<String, CompletableFuture<DataEvent>> futureMessageMap = new ConcurrentHashMap<String, CompletableFuture<DataEvent>>();
+    private ConcurrentHashMap<String, CompletableFuture<BusinessEvent>> futureMessageMap = new ConcurrentHashMap<>();
     @SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
-    
+    //private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
     
     /**
      * Constructs a new chat client object with default JMS broker.
@@ -51,25 +55,28 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      */
     public ChatClientImpl(ClientEndpoint endpoint) {
 		this.clientEndpoint = endpoint; 
-		clientEndpoint.setEventListener(this);
-	    clientEndpoint.listenForEvent(); 
+		this.clientEndpoint.setEventListener(this);
     }
            
     
 	@Override
-	public CompletableFuture<DataEvent> createUser(String userName) {
+	public CompletableFuture<BusinessEvent> createUser(String userName) {
 		
-		DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
-		CompletableFuture<DataEvent> future = requestAsync(event);
+		CreateUserEvent event = new CreateUserEvent();
+		event.setData(userName);
+		//DataEvent event = new MessageEvent(EventType.CREATE_USER, userName);
+		CompletableFuture<BusinessEvent> future = requestAsync(event);
     	return future;
 	}
 	
 	
     @Override
-    public CompletableFuture<DataEvent> enterToRoom(String userName, String room) {
+    public CompletableFuture<BusinessEvent> enterToRoom(String userName, String room) {
     	
-    	DataEvent event = new MessageEvent(EventType.ENTER_ROOM, userName, room);
-    	CompletableFuture<DataEvent> future = requestAsync(event);
+    	RoomChangedEvent event = new RoomChangedEvent();
+    	event.setData(room);
+    	//DataEvent event = new MessageEvent(EventType.ENTER_ROOM, userName, room);
+    	CompletableFuture<BusinessEvent> future = requestAsync(event);
     	return future;
 	}
 	
@@ -78,15 +85,16 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     public void sendMessageToRoom(String userName, String room, String message) {
        
     	MessageEvent event = new MessageEvent(EventType.MESSAGE, userName, room, message);
-        clientEndpoint.sendEvent(event);
+        //clientEndpoint.sendEvent(event);
     }
     
 
-    private CompletableFuture<DataEvent> requestAsync(DataEvent event) {
+    private CompletableFuture<BusinessEvent> requestAsync(BusinessEvent event) {
     	
-    	CompletableFuture<DataEvent> future = new CompletableFuture<DataEvent>();
-		futureMessageMap.put(event.getEventId(), future);
-		log.info("Putting new future for event id: " + event.getEventId());
+    	CompletableFuture<BusinessEvent> future = new CompletableFuture<BusinessEvent>();
+    	String eventId = UUID.randomUUID().toString();
+		futureMessageMap.put(eventId, future);
+		log.info("Putting new future for event id: " + eventId);
 		clientEndpoint.sendEvent(event);
 		return future;
     }
@@ -98,9 +106,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	}
 	
 	@Override
-	public <T> void notifyListeners(Class<T> clazz, T event) {
-		// TODO: call this method in ClientEndpoint when message came on onMessage. 
-		// Check and inform all interested listeners
+	public <T> void notifyListeners(Class<T> clazz, T event) { //TODO: ??? make it static, then no need to set this class instance in endpoint ?
 		
 		@SuppressWarnings("unchecked")
 		EventListener<T> eventListener = eventListeners.get(clazz);
@@ -110,20 +116,21 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	
 
     @Override
-    public void asyncEventReceived(DataEvent event) {
+    public void asyncEventReceived(BusinessEvent event) {
     	
     	for (String eventId : futureMessageMap.keySet()) {
     		log.info("Future map keys: " + eventId);
     	}
     	
-    	if (event != null && event.getEventId() != null) {
-	        CompletableFuture<DataEvent> completableFuture = futureMessageMap.remove(event.getEventId());
-	        if (completableFuture != null) {
-		        completableFuture.complete(event);
-	        }
-    	}
+//    	if (event != null && event.getEventId() != null) {
+//	        CompletableFuture<DataEvent> completableFuture = futureMessageMap.remove(event.getEventId());
+//	        if (completableFuture != null) {
+//		        completableFuture.complete(event);
+//	        }
+//    	}
     }
     
+	
     
     @Override
     public void messageReceived(DataEvent event) {

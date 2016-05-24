@@ -2,9 +2,8 @@ package com.gft.bench.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.EventListener;
 import com.gft.bench.events.ResultMsg;
+import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -23,13 +22,11 @@ public interface ChatClient {
      */
 	//ResultMsg enterToRoom(String room);
 
-	<T> void registerListener(Class<T> clazz, EventListener<T> listener);
+	public void asyncEventReceived(BusinessEvent event);
 	
-	<T> void notifyListeners(Class<T> clazz, T event);
+	CompletableFuture<BusinessEvent> createUser(String userName);
 	
-	CompletableFuture<DataEvent> createUser(String userName);
-	
-	CompletableFuture<DataEvent> enterToRoom(String userName, String room);
+	CompletableFuture<BusinessEvent> enterToRoom(String userName, String room);
     
 	void sendMessageToRoom(String userName, String room, String message);
     

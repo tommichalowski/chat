@@ -1,12 +1,20 @@
 package com.gft.bench.endpoints.jms;
 
+import com.gft.bench.events.business.ChatMessageEvent;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
+
 /**
  * Created by tzms on 3/25/2016.
  */
 public interface JmsEndpoint {
 
+	static final String CREATE_USER_QUEUE = CreateUserEvent.class.getName(); // "com.gft.bench.events.MessageEvent";
+	static final String ROOM_CHANGED_QUEUE = RoomChangedEvent.class.getName();
+	static final String CHAT_MESSAGE_QUEUE = ChatMessageEvent.class.getName();
+	
     static final String MESSAGE_QUEUE_TO_SERVER = "MESSAGE.QUEUE.TO.SERVER";
-    static final String MESSAGE_QUEUE_TO_CLIENT = "MESSAGE.QUEUE.TO.CLIENT";
+    static final String MESSAGE_QUEUE_TO_CLIENT = "MESSAGE.QUEUE.TO.CLIENT";  
     static final String MESSAGE_REQUEST = "message_request";
     static final String MESSAGE_CONFIRMED = "message_confirmed";
     static final String EVENT_TYPE = "event_type";

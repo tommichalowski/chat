@@ -17,13 +17,15 @@ public class CreateUserListener implements EventListener<UserCreated> {
 	
 	@Override
 	public void onEvent(UserCreated event) {
+		
 		log.info("\n\nIn CreateUserListener");
+		
 		if (display != null) {
 			display.print("CreateUserListener");
 		}
 		
 		if (chatClient != null) {
-			chatClient.asyncEventReceived(event);
+//			chatClient.asyncEventReceived(event);
 		}
 	}
 

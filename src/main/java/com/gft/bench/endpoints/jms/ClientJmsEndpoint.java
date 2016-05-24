@@ -1,22 +1,30 @@
 package com.gft.bench.endpoints.jms;
 
+import java.io.Serializable;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.command.ActiveMQTextMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.Envelope;
+import com.gft.bench.events.business.BusinessEvent;
+import com.gft.bench.events.business.ChatMessageEvent;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
+import com.gft.bench.events.listeners.jms.JmsMessageListener;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -24,15 +32,19 @@ import com.gft.bench.exceptions.ChatException;
  * @param <T>
  * @param <T>
  */
-public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageListener {
+public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
+	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
+	private static final String SERVER_QUEUE_SUFFIX = "to.server";
 	private static final Log log = LogFactory.getLog(ClientJmsEndpoint.class);
     protected final String brokerUrl;
     private Connection connection;
     protected Session session;
     MessageProducer producer;
-    private Destination clientMessageQueue;
-    protected ChatEventListener messageListener;
+    protected ChatEventListener eventListener;
+    private ConcurrentHashMap<String, Destination> clientReceivers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, MessageProducer> clientProducers = new ConcurrentHashMap<>();
+    
     //private EventListener eventListener;
 
     
@@ -44,17 +56,23 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
         	connection = connectionFactory.createConnection();
 			connection.start();
 	        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	        Destination destination = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
-            producer = session.createProducer(destination);
+	        
+        	createClientReceiveQueue(ChatMessageEvent.class);
+        	createClientReceiveTemporaryQueue(CreateUserEvent.class);
+        	createClientReceiveTemporaryQueue(RoomChangedEvent.class);
+
+        	createClientProducerQueue(ChatMessageEvent.class);
+        	createClientProducerQueue(CreateUserEvent.class);
+        	createClientProducerQueue(RoomChangedEvent.class);
 		} catch (JMSException e) {
-			throw new ChatException("Can NOT create JMS connection!", e);
+			throw new ChatException("Client can NOT create JMS connection!", e);
 		}
     }
 
     
     @Override
-    public void setEventListener(ChatEventListener messageListener) {
-        this.messageListener = messageListener;
+    public void setEventListener(ChatEventListener eventListener) {
+        this.eventListener = eventListener;
     }
     
 //	@Override
@@ -63,48 +81,89 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
 //	}
     
     
-    @Override
-    public void onMessage(Message message) {
-		try {
-			DataEvent event = EventBuilderUtil.buildEvent(message);
-			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
-			messageListener.asyncEventReceived(event);
-			//eventListener.onEvent(event, listener);
-		} catch (JMSException e) {
-			log.error("\nOnMessage ERROR in client!\n\n\n");
-			e.printStackTrace();
-		}
-    }
+//    @Override
+//    public void onMessage(Message message) {
+//		try {
+//			DataEvent event = EventBuilderUtil.buildEvent(message);
+//			log.info("Client received event: " + event.getType() + "; UserName: " + event.getUserName()); 
+//			messageListener.asyncEventReceived(event);
+//			//eventListener.onEvent(event, listener);
+//		} catch (JMSException e) {
+//			log.error("\nOnMessage ERROR in client!\n\n\n");
+//			e.printStackTrace();
+//		}
+//    }
+    	
     
-    
-    @Override
-    public void listenForEvent() {
-        try {
-            clientMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-            MessageConsumer consumer = session.createConsumer(clientMessageQueue);
-            consumer.setMessageListener(this);
-            log.info("Client is listening...");
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
+//    @Override
+//    public void listenForEvent() {
+//        try {
+//        	Destination chatMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
+//            MessageConsumer clientMessageConsumer = session.createConsumer(chatMessageQueue);
+//            clientMessageConsumer.setMessageListener(new JmsChatMessageListener());
+//            clientQueues.putIfAbsent(CHAT_MESSAGE_QUEUE, chatMessageQueue);
+//            
+//            Destination createUserQueue = session.createTemporaryQueue();
+//			MessageConsumer createUserConsumer = session.createConsumer(createUserQueue);
+//			createUserConsumer.setMessageListener(new JmsCreateUserListener());
+//			clientQueues.putIfAbsent(CREATE_USER_QUEUE, createUserQueue);
+//			//textMsg.setJMSReplyTo(tempDest);
+//			
+//			Destination roomChangedQueue = session.createTemporaryQueue();
+//			MessageConsumer roomChangedConsumer = session.createConsumer(roomChangedQueue);
+//			roomChangedConsumer.setMessageListener(new JmsRoomChangedListener());
+//			clientQueues.putIfAbsent(ROOM_CHANGED_QUEUE, roomChangedQueue);
+//			
+//            log.info("Client is listening...");
+//        } catch (JMSException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     
-    @Override
-    public void sendEvent(DataEvent event) {
-    	try {
-    		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
-    		if (event.getType().isRequestResponse()) {
-    			Destination tempDest = session.createTemporaryQueue();
-    			MessageConsumer responseConsumer = session.createConsumer(tempDest);
-    			responseConsumer.setMessageListener(this);
-    			textMsg.setJMSReplyTo(tempDest);
-    		}
-            producer.send(textMsg);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
+	@Override
+	public <T extends Serializable> void sendEvent(T event) {
+
+		try {
+			log.info("Event getClass: " + event.getClass().getName());
+			
+			Destination replyTo = clientReceivers.get(event.getClass().getName());
+			
+//			Envelope<T> envelope = new Envelope<T>();
+			Envelope envelope = new Envelope();
+			//envelope.data = event.;
+			envelope.replyTo = replyTo;
+			
+			MessageProducer producer = clientProducers.get(event.getClass().getName());
+			TextMessage message = new ActiveMQTextMessage();		
+			message.setText(SerializationUtils.serialize(envelope).toString());
+			producer.send(message);
+			
+		} catch (JMSException e) {
+			log.error("In sendEvent: " + e);
+		} catch (Exception e) {
+			log.error("In sendEvent: " + e);
+		}
+	}
+    
+//    @Override
+//    public void sendEvent(DataEvent event) {
+//    	try {
+//    		TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
+//    		if (event.getType().isRequestResponse()) {
+//    			//Destination tempDest = session.createTemporaryQueue();
+//    			//MessageConsumer responseConsumer = session.createConsumer(tempDest);
+//    			//responseConsumer.setMessageListener(this);
+//    			textMsg.setJMSReplyTo(tempDest); //TODO: set this to correct listener
+//    		}
+//            producer.send(textMsg);
+//        } catch (JMSException e) {
+//            e.printStackTrace();
+//        }
+//    }
+    
+    
+    
 
     
     @Override
@@ -119,6 +178,31 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint, MessageLi
     		connection.close();
     	}
     }
+
+    
+    private <T extends BusinessEvent> void createClientProducerQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+		MessageProducer producer = session.createProducer(queue);
+		clientProducers.putIfAbsent(clazz.getName(), producer);
+	}
+    
+    
+	private <T extends BusinessEvent> void createClientReceiveQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
+		MessageConsumer consumer = session.createConsumer(queue);
+		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+		clientReceivers.putIfAbsent(clazz.getName(), queue);
+	}
+	
+	private <T extends BusinessEvent> void createClientReceiveTemporaryQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createTemporaryQueue();
+		MessageConsumer consumer = session.createConsumer(queue);
+		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+		clientReceivers.putIfAbsent(clazz.getName(), queue);
+	}
     
 //    @Override
 //    public CompletableFuture<ChatEvent> receiveEvent(EventType eventType) throws RequestException {

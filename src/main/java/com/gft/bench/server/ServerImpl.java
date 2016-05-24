@@ -11,7 +11,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ServerEndpoint;
+import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
@@ -22,23 +24,39 @@ import com.gft.bench.exceptions.ChatException;
 /**
  * Created by tzms on 3/25/2016.
  */
-public class ServerImpl implements Server {
+public class ServerImpl implements Server, ChatEventListener {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
     private static final int ROOM_HISTORY_MAX_SIZE = 10;
     private ServerEndpoint chatEndpoint;
+    @SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, LinkedList<String>> roomsHistory = new ConcurrentHashMap<String, LinkedList<String>>();
     private ConcurrentSkipListSet<String> usersLogins = new ConcurrentSkipListSet<>();
 
 
     public ServerImpl(ServerEndpoint chatEndpoint) {
         this.chatEndpoint = chatEndpoint;
-        chatEndpoint.setEventListener(this);
-        chatEndpoint.listenForEvent();
+        this.chatEndpoint.setEventListener(this);
     }
 
-
+    
     @Override
+	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
+		eventListeners.put(clazz, listener);
+	}
+	
+	@Override
+	public <T> void notifyListeners(Class<T> clazz, T event) { //TODO: ??? make it static, then no need to set this class instance in endpoint ?
+		
+		@SuppressWarnings("unchecked")
+		EventListener<T> eventListener = eventListeners.get(clazz);
+		eventListener.onEvent(event);
+	}
+	
+	
+
+    //@Override
     public void asyncEventReceived(DataEvent event) {
 
     	log.info("eventReceived thread: " + Thread.currentThread().getId());
