@@ -13,7 +13,6 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EventListener;
-import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.exceptions.ChatException;
@@ -27,7 +26,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     private static final String BROKER_URL = "tcp://localhost:61616";
     
     private ClientEndpoint clientEndpoint;
-    private ConcurrentHashMap<String, CompletableFuture<BusinessEvent>> futureMessageMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, CompletableFuture<?>> futureMessageMap = new ConcurrentHashMap<>();
     @SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
 
@@ -56,21 +55,21 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
            
     
 	@Override
-	public CompletableFuture<BusinessEvent> createUser(String userName) {
+	public CompletableFuture<CreateUserEvent> createUser(String userName) {
 		
 		CreateUserEvent event = new CreateUserEvent();
-		event.setData(userName);
-		CompletableFuture<BusinessEvent> future = requestAsync(event);
+		event.userName = userName;
+		CompletableFuture<CreateUserEvent> future = requestAsync(event);
     	return future;
 	}
 	
 	
     @Override
-    public CompletableFuture<BusinessEvent> enterToRoom(String userName, String room) {
+    public CompletableFuture<RoomChangedEvent> enterToRoom(String userName, String room) {
     	
     	RoomChangedEvent event = new RoomChangedEvent();
-    	event.setData(room);
-    	CompletableFuture<BusinessEvent> future = requestAsync(event);
+    	event.room = room;
+    	CompletableFuture<RoomChangedEvent> future = requestAsync(event);
     	return future;
 	}
 	
@@ -103,20 +102,20 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	}
 
 	
-    @Override
-    public void asyncEventReceived(BusinessEvent event) {
-    	
-    	for (String eventId : futureMessageMap.keySet()) {
-    		log.info("Future map keys: " + eventId);
-    	}
-    	
+//    @Override
+//    public void asyncEventReceived(BusinessEvent event) {
+//    	
+//    	for (String eventId : futureMessageMap.keySet()) {
+//    		log.info("Future map keys: " + eventId);
+//    	}
+//    	
 //    	if (event != null && event.getEventId() != null) {
 //	        CompletableFuture<DataEvent> completableFuture = futureMessageMap.remove(event.getEventId());
 //	        if (completableFuture != null) {
 //		        completableFuture.complete(event);
 //	        }
 //    	}
-    }  
+//    }  
 
     @Override
     public void exitRoom(String room) {
@@ -132,9 +131,9 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		}
     }
   
-    private CompletableFuture<BusinessEvent> requestAsync(BusinessEvent event) {
+    private <T> CompletableFuture<T> requestAsync(T event) {
     	
-    	CompletableFuture<BusinessEvent> future = new CompletableFuture<BusinessEvent>();
+    	CompletableFuture<T> future = new CompletableFuture<T>();
     	String eventId = UUID.randomUUID().toString();
 		futureMessageMap.put(eventId, future);
 		log.info("Putting new future for event id: " + eventId);

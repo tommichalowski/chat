@@ -2,7 +2,8 @@ package com.gft.bench.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.gft.bench.events.business.BusinessEvent;
+import com.gft.bench.events.business.CreateUserEvent;
+import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -10,16 +11,16 @@ import com.gft.bench.exceptions.ChatException;
  */
 public interface ChatClient {
 	
-	CompletableFuture<BusinessEvent> createUser(String userName);
+	CompletableFuture<CreateUserEvent> createUser(String userName);
 	
 	/** Sends request for joining to the specified room.
 	 * If room already exists principal is joined to this room, else new room is created.  
      *  
      * @return CompletableFuture<BusinessEvent> object generated for this request. 
      */
-	CompletableFuture<BusinessEvent> enterToRoom(String userName, String room);
+	CompletableFuture<RoomChangedEvent> enterToRoom(String userName, String room);
     
-	public void asyncEventReceived(BusinessEvent event);
+	//public void asyncEventReceived(BusinessEvent event);
 	
 	void sendMessageToRoom(String userName, String room, String message);
     

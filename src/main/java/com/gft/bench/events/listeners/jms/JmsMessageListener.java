@@ -10,9 +10,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.business.BusinessEvent;
 
-public class JmsMessageListener<T extends BusinessEvent> implements MessageListener {
+public class JmsMessageListener<T> implements MessageListener {
 
 	private static final Log log = LogFactory.getLog(JmsMessageListener.class);
 	private ChatEventListener chatEventListener;

@@ -20,7 +20,6 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
-import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.events.listeners.business.CreateUserListener;
@@ -84,7 +83,7 @@ public class ServerImplIT {
         server.registerListener(CreateUserEvent.class, listener);
         
         String userName = "Tomasz_Test";
-        CompletableFuture<BusinessEvent> future = chatClient.createUser(userName);
+        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
         //BusinessEvent result = future.get();
         
         TimeUnit.SECONDS.sleep(1);
@@ -106,9 +105,9 @@ public class ServerImplIT {
         disposables.add(() -> chatClient.stopClient());
         
         String userName = "Tomasz_Test";
-        CompletableFuture<BusinessEvent> future = chatClient.createUser(userName);
+        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
 
-        BusinessEvent result = future.get();
+        CreateUserEvent result = future.get();
 
         //Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
         //Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
@@ -130,11 +129,11 @@ public class ServerImplIT {
         
         String userName = "Tomasz_Test";
         
-        CompletableFuture<BusinessEvent> futureUser1 = chatClient.createUser(userName);
+        CompletableFuture<CreateUserEvent> futureUser1 = chatClient.createUser(userName);
         futureUser1.get();
         
-        CompletableFuture<BusinessEvent> futureUser2 = chatClient.createUser(userName);
-        BusinessEvent result2 = futureUser2.get();
+        CompletableFuture<CreateUserEvent> futureUser2 = chatClient.createUser(userName);
+        CreateUserEvent result2 = futureUser2.get();
 
         //Assert.assertEquals(RequestResult.ERROR, result2.getResult());
     }
@@ -158,7 +157,7 @@ public class ServerImplIT {
         
         String room = "Music";
         String userName = "Ania";
-        CompletableFuture<BusinessEvent> future = chatClient.createUser(userName);
+        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
         future.get();
         
         chatClient.enterToRoom(userName, room);
@@ -187,8 +186,8 @@ public class ServerImplIT {
 	        
 	        String room = "Music";
 	        String userName = "Ania";
-	        CompletableFuture<BusinessEvent> future = chatClient.enterToRoom(userName, room);
-	        BusinessEvent result = future.get();
+	        CompletableFuture<RoomChangedEvent> future = chatClient.enterToRoom(userName, room);
+	        RoomChangedEvent result = future.get();
 	        
 	       // Assert.assertEquals(RequestResult.ERROR, result.getResult());	   
     }

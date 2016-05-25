@@ -17,7 +17,6 @@ import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.events.business.ChatMessageEvent;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
@@ -77,7 +76,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     
     
 	@Override
-	public <T extends BusinessEvent> void sendEvent(T event) {
+	public <T> void sendEvent(T event) {
 
 		try {
 			log.info("Sending event className: " + event.getClass().getName());
@@ -113,7 +112,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     }
 
     
-    private <T extends BusinessEvent> void createClientProducerQueue(Class<T> clazz) throws JMSException {
+    private <T> void createClientProducerQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
 		MessageProducer producer = session.createProducer(queue);
@@ -121,7 +120,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 	}
     
     
-	private <T extends BusinessEvent> void createClientReceiveQueue(Class<T> clazz) throws JMSException {
+	private <T> void createClientReceiveQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
 		MessageConsumer consumer = session.createConsumer(queue);
@@ -129,7 +128,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		clientReceivers.putIfAbsent(clazz.getName(), queue);
 	}
 	
-	private <T extends BusinessEvent> void createClientReceiveTemporaryQueue(Class<T> clazz) throws JMSException {
+	private <T> void createClientReceiveTemporaryQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createTemporaryQueue();
 		MessageConsumer consumer = session.createConsumer(queue);

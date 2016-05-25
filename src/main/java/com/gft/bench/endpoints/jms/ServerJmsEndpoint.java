@@ -17,7 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
-import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.events.business.ChatMessageEvent;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
@@ -110,14 +109,14 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     }
     
     
-    private <T extends BusinessEvent> void createServerProducerQueue(Class<T> clazz) throws JMSException {
+    private <T> void createServerProducerQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
 		MessageProducer producer = session.createProducer(queue);
 		serverProducers.putIfAbsent(clazz.getName(), producer);
 	}
     
-    private <T extends BusinessEvent> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
+    private <T> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
 		MessageConsumer consumer = session.createConsumer(queue);

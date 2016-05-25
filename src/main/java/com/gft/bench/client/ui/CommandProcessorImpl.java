@@ -8,7 +8,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
-import com.gft.bench.events.business.BusinessEvent;
 
 public class CommandProcessorImpl implements CommandProcessor {
 
@@ -30,7 +29,7 @@ public class CommandProcessorImpl implements CommandProcessor {
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
 		executorService.execute(() -> {
 			
-			CompletableFuture<BusinessEvent> future = null; 	
+			CompletableFuture<?> future = null; 	
 			
 			while (true) {
 				UIEvent event = display.handleInput();
@@ -48,7 +47,7 @@ public class CommandProcessorImpl implements CommandProcessor {
 				}
 					
 				future.thenAccept(result -> {
-					display.print(result.getData());
+					//display.print(result.getData());
 				});
 			}
 		});
