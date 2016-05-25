@@ -8,10 +8,9 @@ import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
-import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.command.ActiveMQTextMessage;
+import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.SerializationUtils;
@@ -132,14 +131,15 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 			log.info("Event getClass: " + event.getClass().getName());
 			
 			Destination replyTo = clientReceivers.get(event.getClass().getName());
+			MessageProducer producer = clientProducers.get(event.getClass().getName());
 			
 			Envelope envelope = new Envelope();
 			envelope.data = event.getData().getBytes();
 			envelope.replyTo = replyTo;
+			byte[] env = SerializationUtils.serialize(envelope);
 			
-			MessageProducer producer = clientProducers.get(event.getClass().getName());
-			TextMessage message = new ActiveMQTextMessage();		
-			message.setText(SerializationUtils.serialize(envelope).toString());
+			ActiveMQBytesMessage message = new ActiveMQBytesMessage();
+			message.writeBytes(env);
 			producer.send(message);
 			
 		} catch (JMSException e) {

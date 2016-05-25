@@ -1,9 +1,9 @@
 package com.gft.bench.events.listeners.jms;
 
+import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
-import javax.jms.TextMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,15 +29,15 @@ public class JmsMessageListener<T extends BusinessEvent> implements MessageListe
 
 		//DataEvent event = EventBuilderUtil.buildEvent(message);
 
-		if (message instanceof TextMessage) {
+		if (message instanceof BytesMessage) {
 			try {
-				TextMessage textMsg = (TextMessage) message;
-				Envelope envelope = (Envelope) SerializationUtils.deserialize(textMsg.getText().getBytes());
+				BytesMessage msg = (BytesMessage) message;
+				byte[] byteArr = new byte[(int) msg.getBodyLength()];
+				msg.readBytes(byteArr);
+				Envelope envelope = (Envelope) SerializationUtils.deserialize(byteArr);
 				
-				T event = clazz.newInstance();
-				event.setData(envelope.data.toString());
-
-				//chatClient.asyncEventReceived(event);
+				T event = clazz.newInstance(); 
+				event.setData(new String(envelope.data));
 				chatEventListener.notifyListeners(clazz, event);
 				
 			} catch (InstantiationException e) {

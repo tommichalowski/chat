@@ -24,7 +24,7 @@ public class CreateUserListener implements EventListener<CreateUserEvent> {
 		}
 		
 		if (chatClient != null) {
-//			chatClient.asyncEventReceived(event);
+			//TODO: chatClient.asyncEventReceived(event);
 		}
 	}
 
