@@ -11,9 +11,20 @@ import com.gft.bench.exceptions.ChatException;
  */
 public interface ServerEndpoint {
     
+	
     void sendEvent(DataEvent event);
     
     void setEventListeners(ChatEventListener eventListener) throws ChatException;
     
+    <TRequest, TResponse> void registerListener(RequestHandler<TRequest, TResponse> handler); 
+    
     void cleanup() throws JMSException;
+    
+    
 }
+
+interface RequestHandler <TRequest, TResponse> {
+	
+  	 TResponse onMessage(TRequest request);
+  }
+
