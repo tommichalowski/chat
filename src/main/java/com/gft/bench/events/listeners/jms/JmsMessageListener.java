@@ -10,7 +10,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.Envelope;
 import com.gft.bench.events.business.BusinessEvent;
 
 public class JmsMessageListener<T extends BusinessEvent> implements MessageListener {
@@ -32,16 +31,12 @@ public class JmsMessageListener<T extends BusinessEvent> implements MessageListe
 				BytesMessage msg = (BytesMessage) message;
 				byte[] byteArr = new byte[(int) msg.getBodyLength()];
 				msg.readBytes(byteArr);
-				Envelope envelope = (Envelope) SerializationUtils.deserialize(byteArr);
 				
-				T event = clazz.newInstance(); 
-				event.setData(new String(envelope.data));
+				@SuppressWarnings("unchecked")
+				T event = (T) SerializationUtils.deserialize(byteArr);
+				
 				chatEventListener.notifyListeners(clazz, event);
 				
-			} catch (InstantiationException e) {
-				log.error("Error in JmsMessageListener: " + e);
-			} catch (IllegalAccessException e) {
-				log.error("Error in JmsMessageListener: " + e);
 			} catch (JMSException e) {
 				log.error("Error in JmsMessageListener: " + e);
 			}

@@ -17,7 +17,6 @@ import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.Envelope;
 import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.events.business.ChatMessageEvent;
 import com.gft.bench.events.business.CreateUserEvent;
@@ -83,16 +82,13 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		try {
 			log.info("Sending event className: " + event.getClass().getName());
 			
-			Destination replyTo = clientReceivers.get(event.getClass().getName());
+			//Destination replyTo = clientReceivers.get(event.getClass().getName());
 			MessageProducer producer = clientProducers.get(event.getClass().getName());
 			
-			Envelope envelope = new Envelope();
-			envelope.data = event.getData().getBytes();
-			envelope.replyTo = replyTo;
-			byte[] serializedEnvelope = SerializationUtils.serialize(envelope);
+			byte[] serializedEvent = SerializationUtils.serialize(event);
 			
 			ActiveMQBytesMessage message = new ActiveMQBytesMessage();
-			message.writeBytes(serializedEnvelope);
+			message.writeBytes(serializedEvent);
 			producer.send(message);
 			
 		} catch (JMSException e) {
