@@ -89,7 +89,6 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
                 MessageProducer producer = session.createProducer(destination);
             	producer.send(textMsg);
             }
-            //producer.close();
         } catch (JMSException e) {
         	log.error("ERROR on server create user!!!");
             e.printStackTrace();
@@ -126,29 +125,4 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 		serverReceivers.putIfAbsent(clazz.getName(), queue);
 	}
 
-    
-//  @Override
-//  public void listenForEvent() {
-//      try {
-//          Destination serverMessageQueue = session.createQueue(MESSAGE_QUEUE_TO_SERVER);
-//          messageConsumer = session.createConsumer(serverMessageQueue);
-//          messageConsumer.setMessageListener(this);
-//          
-//          log.info("Server is listening...");
-//      } catch (JMSException e) {
-//          e.printStackTrace();
-//      }
-//  }
-    
-    
-//  @Override
-//  public void onMessage(Message message) {
-//      try {
-//  		DataEvent event = EventBuilderUtil.buildEvent(message);
-//  		//messageListener.asyncEventReceived(event);
-//      } catch (JMSException e) {
-//          e.printStackTrace();
-//      }
-//  }
-    
 }

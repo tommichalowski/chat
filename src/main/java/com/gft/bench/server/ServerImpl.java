@@ -17,10 +17,6 @@ import com.gft.bench.events.EventListener;
 import com.gft.bench.events.EventType;
 import com.gft.bench.events.MessageEvent;
 import com.gft.bench.events.RequestResult;
-import com.gft.bench.events.business.CreateUserEvent;
-import com.gft.bench.events.business.RoomChangedEvent;
-import com.gft.bench.events.listeners.business.CreateUserListener;
-import com.gft.bench.events.listeners.business.RoomChangedListener;
 import com.gft.bench.exceptions.ChatException;
 
 
@@ -126,8 +122,7 @@ public class ServerImpl implements Server, ChatEventListener {
 
     @Override
     public LinkedList<String> addRoom(String room, String userName) {
-    	
-    	//roomsHistory.putIfAbsent
+
     	synchronized (roomsHistory) {
     		LinkedList<String> roomHistory;
 	        if (roomsHistory.containsKey(room)) {

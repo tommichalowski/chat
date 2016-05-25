@@ -8,10 +8,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.client.ChatClient;
-import com.gft.bench.events.DataEvent;
+import com.gft.bench.events.business.BusinessEvent;
 
 public class CommandProcessorImpl implements CommandProcessor {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(CommandProcessorImpl.class);
 	
 	Display display = new DisplayImpl(System.in, System.out);
@@ -29,7 +30,7 @@ public class CommandProcessorImpl implements CommandProcessor {
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
 		executorService.execute(() -> {
 			
-			CompletableFuture<DataEvent> future = null; 	
+			CompletableFuture<BusinessEvent> future = null; 	
 			
 			while (true) {
 				UIEvent event = display.handleInput();
@@ -47,7 +48,6 @@ public class CommandProcessorImpl implements CommandProcessor {
 				}
 					
 				future.thenAccept(result -> {
-					log.info("Result: " + result.getResult());
 					display.print(result.getData());
 				});
 			}

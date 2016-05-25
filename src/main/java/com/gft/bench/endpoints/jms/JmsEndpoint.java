@@ -9,7 +9,7 @@ import com.gft.bench.events.business.RoomChangedEvent;
  */
 public interface JmsEndpoint {
 
-	static final String CREATE_USER_QUEUE = CreateUserEvent.class.getName(); // "com.gft.bench.events.MessageEvent";
+	static final String CREATE_USER_QUEUE = CreateUserEvent.class.getName();
 	static final String ROOM_CHANGED_QUEUE = RoomChangedEvent.class.getName();
 	static final String CHAT_MESSAGE_QUEUE = ChatMessageEvent.class.getName();
 	

@@ -20,7 +20,6 @@ public class JmsCreateUserListener implements MessageListener {
 	@Override
     public void onMessage(Message message) {
 
-		//DataEvent event = EventBuilderUtil.buildEvent(message);
 		try {
 			if (message instanceof TextMessage) {
 				TextMessage textMsg = (TextMessage) message;
@@ -28,7 +27,6 @@ public class JmsCreateUserListener implements MessageListener {
 				event.userName = textMsg.getText();
 
 				log.info("JmsCreateUserListener, user name: " + event.userName);
-				//chatClient.asyncEventReceived(event);
 				chatEventListener.notifyListeners(CreateUserEvent.class, event);
 			}
 		} catch (JMSException e) {

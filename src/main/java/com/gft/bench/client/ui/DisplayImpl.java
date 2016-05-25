@@ -42,8 +42,6 @@ public class DisplayImpl implements Display {
     }
 
     
-    //public void print(OutputStream output) {
-    //public void print(UIEvent uiEvent) {
     @Override
 	public void print(String message) {	
     	printer.println(message);

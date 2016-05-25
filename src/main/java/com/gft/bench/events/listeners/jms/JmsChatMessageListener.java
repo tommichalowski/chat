@@ -20,7 +20,6 @@ public class JmsChatMessageListener implements MessageListener {
 	@Override
     public void onMessage(Message message) {
 
-		//DataEvent event = EventBuilderUtil.buildEvent(message);
 		try {
 			if (message instanceof TextMessage) {
 				TextMessage textMsg = (TextMessage) message;
@@ -28,7 +27,6 @@ public class JmsChatMessageListener implements MessageListener {
 				event.message = textMsg.getText();
 
 				log.info("JmsChatMessageListener, message: " + event.message);
-				//chatClient.asyncEventReceived(event);
 				chatEventListener.notifyListeners(ChatMessageEvent.class, event);
 			}
 		} catch (JMSException e) {

@@ -20,7 +20,6 @@ public class JmsRoomChangedListener implements MessageListener {
 	@Override
     public void onMessage(Message message) {
 
-		//DataEvent event = EventBuilderUtil.buildEvent(message);
 		try {
 			if (message instanceof TextMessage) {
 				TextMessage textMsg = (TextMessage) message;
@@ -28,7 +27,6 @@ public class JmsRoomChangedListener implements MessageListener {
 				event.room = textMsg.getText();
 
 				log.info("JmsRoomChangedListener, room: " + event.room);
-				//chatClient.asyncEventReceived(event);
 				chatEventListener.notifyListeners(RoomChangedEvent.class, event);
 			}
 		} catch (JMSException e) {

@@ -11,11 +11,12 @@ public interface Server extends ChatEventListener {
     public static final String NEW_ROOM_CREATED = " has created new room: ";
     public static final String NEW_PERSON_JOINED = " has joined to room: ";
 
-    void stopServer() throws ChatException;;
-
     LinkedList<String> getRoomHistory(String room);
 
 	Set<String> getRooms();
 
 	LinkedList<String> addRoom(String room, String userName);
+	
+	void stopServer() throws ChatException;
 }
+

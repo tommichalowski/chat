@@ -15,7 +15,6 @@ public class Envelope implements Serializable {
 	
 //        public string correlationId 
 //        public string sendTo 
-//        public string replyTo 
 //        public byte[] body 
 //        public string bodyType 
 }

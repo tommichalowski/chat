@@ -27,8 +27,6 @@ public class JmsMessageListener<T extends BusinessEvent> implements MessageListe
 	@Override
     public void onMessage(Message message) {
 
-		//DataEvent event = EventBuilderUtil.buildEvent(message);
-
 		if (message instanceof BytesMessage) {
 			try {
 				BytesMessage msg = (BytesMessage) message;

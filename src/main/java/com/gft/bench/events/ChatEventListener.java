@@ -10,6 +10,4 @@ public interface ChatEventListener {
 	<T> void notifyListeners(Class<T> clazz, T event);
 	
 	<T> EventListener<T> getEventListener(Class<T> clazz);
-
-	//void asyncEventReceived(DataEvent event);
 }

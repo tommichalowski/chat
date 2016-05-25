@@ -14,7 +14,9 @@ public class RoomChangedListener implements EventListener<RoomChangedEvent> {
 	
 	@Override
 	public void onEvent(RoomChangedEvent event) {
+		
 		log.info("\n\nIn RoomChangedListener");
+		
 		if (display != null) {
 			display.print("RoomChangedListener");
 		}

@@ -12,12 +12,8 @@ import com.gft.bench.exceptions.ChatException;
 public interface ClientEndpoint {
 
     <T extends BusinessEvent> void sendEvent(T event);
-    void setEventListeners(ChatEventListener eventListener) throws ChatException;
-//    void setEventListener(EventListener listener);
+    
+    void setEventListeners(ChatEventListener eventListener) throws ChatException;   
     
     void cleanup() throws JMSException; //TODO: shouldn't exist
 }
-
-//<TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request);
-//EnterToRoomRequest request = new EnterToRoomRequest();
-//EnterToRoomResponse response = endpoint.request<EnterToRoomRequest, Response>(request);

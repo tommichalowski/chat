@@ -1,7 +1,5 @@
 package com.gft.bench;
 
-import javax.jms.JMSException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,7 +25,7 @@ public class App {
                 ServerJmsEndpoint jmsEndpoint = new ServerJmsEndpoint(BROKER_URL);
                 @SuppressWarnings("unused")
 				Server server = new ServerImpl(jmsEndpoint);
-            } catch (JMSException e) {
+            } catch (ChatException e) {
                 log.error(e.getMessage());
             } 
         } else {
