@@ -1,6 +1,5 @@
 package com.gft.bench.endpoints.jms;
 
-import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jms.Connection;
@@ -127,16 +126,15 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
     
 	@Override
-	public <T extends Serializable> void sendEvent(T event) {
+	public <T extends BusinessEvent> void sendEvent(T event) {
 
 		try {
 			log.info("Event getClass: " + event.getClass().getName());
 			
 			Destination replyTo = clientReceivers.get(event.getClass().getName());
 			
-//			Envelope<T> envelope = new Envelope<T>();
 			Envelope envelope = new Envelope();
-			//envelope.data = event.;
+			envelope.data = event.getData().getBytes();
 			envelope.replyTo = replyTo;
 			
 			MessageProducer producer = clientProducers.get(event.getClass().getName());

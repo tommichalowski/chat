@@ -1,10 +1,9 @@
 package com.gft.bench.endpoints;
 
-import java.io.Serializable;
-
 import javax.jms.JMSException;
 
 import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.business.BusinessEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -12,7 +11,7 @@ import com.gft.bench.exceptions.ChatException;
  */
 public interface ClientEndpoint {
 
-    <T extends Serializable> void sendEvent(T event);
+    <T extends BusinessEvent> void sendEvent(T event);
     void setEventListeners(ChatEventListener eventListener) throws ChatException;
 //    void setEventListener(EventListener listener);
     

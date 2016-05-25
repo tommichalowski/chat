@@ -7,8 +7,10 @@ import javax.jms.TextMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.events.ChatEventListener;
+import com.gft.bench.events.Envelope;
 import com.gft.bench.events.business.BusinessEvent;
 
 public class JmsMessageListener<T extends BusinessEvent> implements MessageListener {
@@ -30,9 +32,10 @@ public class JmsMessageListener<T extends BusinessEvent> implements MessageListe
 		if (message instanceof TextMessage) {
 			try {
 				TextMessage textMsg = (TextMessage) message;
+				Envelope envelope = (Envelope) SerializationUtils.deserialize(textMsg.getText().getBytes());
 				
 				T event = clazz.newInstance();
-				event.setData(textMsg.getText());
+				event.setData(envelope.data.toString());
 
 				//chatClient.asyncEventReceived(event);
 				chatEventListener.notifyListeners(clazz, event);
