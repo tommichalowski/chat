@@ -1,5 +1,6 @@
 package com.gft.bench.endpoints.jms;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jms.Connection;
@@ -55,6 +56,12 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		}
     }
 
+    
+	@Override
+	public <TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request) {
+		return null;
+	}
+	
     
     @Override
     public void setEventListeners(ChatEventListener eventListener) throws ChatException {

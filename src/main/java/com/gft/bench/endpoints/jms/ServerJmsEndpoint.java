@@ -14,6 +14,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
@@ -56,6 +57,15 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     
     
 	@Override
+	public <TRequest, TResponse> void registerListener(RequestHandler<TRequest, TResponse> handler) {
+				/** TODO:
+				 *  - create queue and consumer on TReqeust (if not exist) and put into collection where 
+				 *  key is TRequest class and value is queue
+				 *  - 
+				 */
+	}
+    
+	@Override
 	public void setEventListeners(ChatEventListener eventListener) throws ChatException {
 		
 		this.eventListener = eventListener;
@@ -73,6 +83,21 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 		}
 	}
 	
+    private <T> void createServerProducerQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
+		MessageProducer producer = session.createProducer(queue);
+		serverProducers.putIfAbsent(clazz.getName(), producer);
+	}
+    
+    private <T> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
+		
+		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+		MessageConsumer consumer = session.createConsumer(queue);
+		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+		serverReceivers.putIfAbsent(clazz.getName(), queue);
+	}
+    
 
     @Override
     public void sendEvent(DataEvent event) {
@@ -107,21 +132,5 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     		connection.close();
     	}
     }
-    
-    
-    private <T> void createServerProducerQueue(Class<T> clazz) throws JMSException {
-		
-		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
-		MessageProducer producer = session.createProducer(queue);
-		serverProducers.putIfAbsent(clazz.getName(), producer);
-	}
-    
-    private <T> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
-		
-		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-		MessageConsumer consumer = session.createConsumer(queue);
-		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
-		serverReceivers.putIfAbsent(clazz.getName(), queue);
-	}
 
 }
