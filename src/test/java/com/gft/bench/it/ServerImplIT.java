@@ -7,11 +7,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.gft.bench.Disposer;
@@ -66,39 +63,7 @@ public class ServerImplIT {
     	return broker;
     }
 
-    public static class AddRequest {
-    	 int x;
-    	 int y;
-    }
-    
-    public static class AddResponse {
-    	int z;
-    }
-    
-    
-    @Test
-    public void shouldReceiveResponse() throws Exception {
-    	
-    	startInMemoryBroker();
-    	
-    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-    	serverEndpoint.<AddRequest, AddResponse>registerListener(request -> {
-    		AddResponse response = new AddResponse();
-    		response.z = request.x + request.y;
-    		return response;
-    	});
-    	
-    	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-    	AddRequest request = new AddRequest();
-    	request.x = 5;
-    	request.y = 3;
-    	CompletableFuture<AddResponse> future = clientEndpoint.<AddRequest, AddResponse>request(request);
-    	AddResponse response = future.get();
 
-    	Assert.assertThat(response.z, Matchers.is(8));
-    }
-    
-    
     //@Test
     public void createUserRequestShouldBeReceivedByServer() throws Exception {
     	

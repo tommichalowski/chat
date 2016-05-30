@@ -1,5 +1,6 @@
 package com.gft.bench.endpoints;
 
+import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 
 import javax.jms.JMSException;
@@ -14,7 +15,7 @@ public interface ClientEndpoint {
 
     <T> void sendEvent(T event);
     
-    <TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request);
+    <TRequest extends Serializable, TResponse> CompletableFuture<TResponse> request(TRequest request) throws JMSException;
     
     void setEventListeners(ChatEventListener eventListener) throws ChatException;   
     

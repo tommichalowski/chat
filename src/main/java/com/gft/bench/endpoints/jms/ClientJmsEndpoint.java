@@ -1,5 +1,7 @@
 package com.gft.bench.endpoints.jms;
 
+import java.io.Serializable;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,6 +43,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     protected ChatEventListener eventListener;
     private ConcurrentHashMap<String, Destination> clientReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> clientProducers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap = new ConcurrentHashMap<>();
     
 
     public ClientJmsEndpoint(String brokerUrl) throws ChatException {
@@ -56,12 +59,6 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		}
     }
 
-    
-	@Override
-	public <TRequest, TResponse> CompletableFuture<TResponse> request(TRequest request) {
-		return null;
-	}
-	
     
     @Override
     public void setEventListeners(ChatEventListener eventListener) throws ChatException {
@@ -104,21 +101,45 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		}
 	}
     
-    
-    @Override
-    public void cleanup() throws JMSException {
-    	if (producer != null) {
-    		producer.close();
-    	}
-    	if (session != null) {
-    		session.close();
-    	}
-    	if (connection != null) {
-    		connection.close();
-    	}
-    }
+	
+	@Override
+	public <TRequest extends Serializable, TResponse> CompletableFuture<TResponse> request(TRequest request) throws JMSException {
+		
+		CompletableFuture<TResponse> future = new CompletableFuture<TResponse>();
 
-    
+		try {
+			String requestId = UUID.randomUUID().toString();
+	    	futureRequestMap.put(requestId, future);
+
+	    	byte[] serializedRequest = SerializationUtils.serialize(request);
+	    	
+			MessageProducer producer = getClientMessageProducer(request.getClass());
+			ActiveMQBytesMessage message = new ActiveMQBytesMessage();
+			message.writeBytes(serializedRequest);
+			message.setCorrelationId(requestId);
+			producer.send(message); 	
+		} catch (Exception e) {
+			log.error(e);
+		}
+    	
+		return future;
+	}
+
+	
+	private <T> MessageProducer getClientMessageProducer(Class<T> clazz) throws JMSException {
+		
+		MessageProducer producer = clientProducers.get(clazz.getName() + SERVER_QUEUE_SUFFIX); 
+				
+		if (producer == null) {
+			Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+			producer = session.createProducer(queue);
+			clientProducers.putIfAbsent(clazz.getName(), producer);
+		}
+		
+		return producer;
+	}
+	
+	
     private <T> void createClientProducerQueue(Class<T> clazz) throws JMSException {
 		
 		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
@@ -142,5 +163,19 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
 		clientReceivers.putIfAbsent(clazz.getName(), queue);
 	}
+	
+	
+    @Override
+    public void cleanup() throws JMSException {
+    	if (producer != null) {
+    		producer.close();
+    	}
+    	if (session != null) {
+    		session.close();
+    	}
+    	if (connection != null) {
+    		connection.close();
+    	}
+    }
 
 }
