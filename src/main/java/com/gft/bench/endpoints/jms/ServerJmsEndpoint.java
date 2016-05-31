@@ -21,7 +21,6 @@ import com.gft.bench.events.DataEvent;
 import com.gft.bench.events.business.ChatMessageEvent;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
-import com.gft.bench.events.listeners.jms.JmsMessageListener;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -38,7 +37,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     protected Session session;
     MessageConsumer messageConsumer;
     protected ChatEventListener eventListener;
-    private ConcurrentHashMap<String, Destination> serverReceivers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, MessageConsumer> serverReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> serverProducers = new ConcurrentHashMap<>();
 
     
@@ -57,47 +56,46 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     
     
 	@Override
-	public <TRequest, TResponse> void registerListener(RequestHandler<TRequest, TResponse> handler) {
-				/** TODO:
-				 *  - create queue and consumer on TReqeust (if not exist) and put into collection where 
-				 *  key is TRequest class and value is queue
-				 *  - 
-				 */
-	}
-    
-	@Override
-	public void setEventListeners(ChatEventListener eventListener) throws ChatException {
-		
-		this.eventListener = eventListener;
-		
+	public <TRequest, TResponse> void registerListener(Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
+
 		try {
-			createServerReceiveQueue(ChatMessageEvent.class);
-	        createServerReceiveQueue(CreateUserEvent.class);
-	        createServerReceiveQueue(RoomChangedEvent.class);
-	
-	        createServerProducerQueue(ChatMessageEvent.class);
-	        createServerProducerQueue(CreateUserEvent.class);
-	        createServerProducerQueue(RoomChangedEvent.class);
+			log.info("Handler class: " + clazz.getName());
+			MessageConsumer consumer = getServerMessageReceiver(clazz);
+			consumer.setMessageListener(message -> {
+				//TRequest request = message;
+				TResponse response = handler.onMessage(null);
+			});
 		} catch (JMSException e) {
-			throw new ChatException("Server can NOT create JMS queues!", e);
+			log.error(e);
 		}
 	}
+   	
 	
-    private <T> void createServerProducerQueue(Class<T> clazz) throws JMSException {
+    private synchronized <T> MessageConsumer getServerMessageReceiver(Class<T> clazz) throws JMSException {
 		
-		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
-		MessageProducer producer = session.createProducer(queue);
-		serverProducers.putIfAbsent(clazz.getName(), producer);
+    	MessageConsumer consumer = serverReceivers.get(clazz.getName());
+    	if (consumer == null) {
+    		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+    		consumer = session.createConsumer(queue);
+    		//consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+    		serverReceivers.putIfAbsent(clazz.getName(), consumer);
+    	}
+    	
+    	return consumer;
 	}
     
-    private <T> void createServerReceiveQueue(Class<T> clazz) throws JMSException {
+    private synchronized <T> MessageProducer getServerMessageProducer(Class<T> clazz) throws JMSException {
 		
-		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-		MessageConsumer consumer = session.createConsumer(queue);
-		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
-		serverReceivers.putIfAbsent(clazz.getName(), queue);
+    	MessageProducer producer = serverProducers.get(clazz);
+    	if (producer == null) {
+			Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
+    		producer = session.createProducer(queue);
+			serverProducers.putIfAbsent(clazz.getName(), producer);
+    	}
+    	
+    	return producer;
 	}
-    
+        
 
     @Override
     public void sendEvent(DataEvent event) {
@@ -119,6 +117,25 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
         }
     }
 
+    
+	@Override
+	public void setEventListeners(ChatEventListener eventListener) throws ChatException {
+		
+		this.eventListener = eventListener;
+		
+		try {
+			getServerMessageReceiver(ChatMessageEvent.class);
+			getServerMessageReceiver(CreateUserEvent.class);
+			getServerMessageReceiver(RoomChangedEvent.class);
+	
+	        getServerMessageProducer(ChatMessageEvent.class);
+	        getServerMessageProducer(CreateUserEvent.class);
+	        getServerMessageProducer(RoomChangedEvent.class);
+		} catch (JMSException e) {
+			throw new ChatException("Server can NOT create JMS queues!", e);
+		}
+	}
+	
     
     @Override
     public void cleanup() throws JMSException {

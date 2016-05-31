@@ -68,7 +68,7 @@ public class JmsEndpointsIT {
     	startInMemoryBroker();
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-    	serverEndpoint.<AddRequest, AddResponse>registerListener(request -> {
+    	serverEndpoint.<AddRequest, AddResponse>registerListener(AddRequest.class, request -> {
     		AddResponse response = new AddResponse();
     		response.z = request.x + request.y;
     		return response;
@@ -79,7 +79,7 @@ public class JmsEndpointsIT {
     	request.x = 5;
     	request.y = 3;
     	CompletableFuture<AddResponse> future = clientEndpoint.<AddRequest, AddResponse>request(request);
-    	AddResponse response = future.get(5, TimeUnit.SECONDS);
+    	AddResponse response = future.get(1, TimeUnit.SECONDS);
 
     	Assert.assertThat(response.z, Matchers.is(8));
     }

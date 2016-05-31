@@ -16,7 +16,7 @@ public interface ServerEndpoint {
     
     void setEventListeners(ChatEventListener eventListener) throws ChatException;
     
-    <TRequest, TResponse> void registerListener(RequestHandler<TRequest, TResponse> handler); 
+    <TRequest, TResponse> void registerListener(Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler); 
     
     void cleanup() throws JMSException;
 }
