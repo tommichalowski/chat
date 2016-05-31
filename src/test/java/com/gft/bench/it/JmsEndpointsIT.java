@@ -20,6 +20,7 @@ import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.it.dto.AddRequest;
+import com.gft.bench.it.dto.AddResponse;
 
 public class JmsEndpointsIT {
 
@@ -56,11 +57,6 @@ public class JmsEndpointsIT {
     	return broker;
     }
     
-	
-    public class AddResponse {
-    	int z;
-    }
-   
 	
     @Test
     public void shouldReceiveResponse() throws Exception {

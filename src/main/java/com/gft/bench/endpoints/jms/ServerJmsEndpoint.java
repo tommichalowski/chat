@@ -1,7 +1,9 @@
 package com.gft.bench.endpoints.jms;
 
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -11,8 +13,10 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
@@ -56,17 +60,44 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
     
     
 	@Override
-	public <TRequest, TResponse> void registerListener(Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
+	public <TRequest extends Serializable, TResponse extends Serializable> void registerListener(
+			Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
 
+		log.info("\n\nServer Handler class: " + clazz.getName());
 		try {
-			log.info("Handler class: " + clazz.getName());
-			MessageConsumer consumer = getServerMessageReceiver(clazz);
+			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
+			MessageConsumer consumer = getServerMessageReceiver(clazz); 
 			consumer.setMessageListener(message -> {
-				//TRequest request = message;
-				TResponse response = handler.onMessage(null);
+				try {
+					log.info("\n\nServer registerListener Message listener lambda\n\n");
+					if (message instanceof BytesMessage) {
+							BytesMessage msg = (BytesMessage) message;
+							byte[] byteArr = new byte[(int) msg.getBodyLength()];
+							msg.readBytes(byteArr);
+							
+							@SuppressWarnings("unchecked")
+							TRequest event = (TRequest) SerializationUtils.deserialize(byteArr);
+							TResponse response = handler.onMessage(event);
+							
+							byte[] serializedResponse = SerializationUtils.serialize(response);
+
+							ActiveMQBytesMessage responseMsg = new ActiveMQBytesMessage();
+							responseMsg.writeBytes(serializedResponse);
+							responseMsg.setCorrelationId(message.getJMSCorrelationID());
+							
+							MessageProducer producer = session.createProducer(message.getJMSReplyTo());
+			            	producer.send(message.getJMSReplyTo(), responseMsg);
+			            	//MessageProducer producer = getServerMessageProducer(clazz); //TODO: change to temporary queue with reply to???
+//							producer.send(responseMsg);
+					}
+				} catch (JMSException e) {
+					log.error("Server registerListener Message listener lambda error", e);
+					e.printStackTrace();
+				}
 			});
 		} catch (JMSException e) {
-			log.error(e);
+			log.error("Server registerListener Message listener lambda error", e);
+			e.printStackTrace();
 		}
 	}
    	

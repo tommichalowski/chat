@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -113,13 +114,34 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
 	    	byte[] serializedRequest = SerializationUtils.serialize(request);
 	    	
-			MessageProducer producer = getClientMessageProducer(request.getClass());
+			Destination tempDest = session.createTemporaryQueue();
+			MessageConsumer responseConsumer = session.createConsumer(tempDest);
+			responseConsumer.setMessageListener(message -> {
+				try {
+					log.info("\n\nClient request method message listener lambda\n\n");
+					if (message instanceof BytesMessage) {
+						BytesMessage msg = (BytesMessage) message;
+						byte[] byteArr = new byte[(int) msg.getBodyLength()];
+						msg.readBytes(byteArr);
+						
+						@SuppressWarnings("unchecked")
+						TResponse response = (TResponse) SerializationUtils.deserialize(byteArr);
+						future.complete(response);
+					}
+				} catch (JMSException e) {
+					log.error(e);
+				}
+			}); 
+
 			ActiveMQBytesMessage message = new ActiveMQBytesMessage();
 			message.writeBytes(serializedRequest);
+			message.setJMSReplyTo(tempDest);
 			message.setCorrelationId(requestId);
+			
+			MessageProducer producer = getClientMessageProducer(request.getClass());
 			producer.send(message); 	
 		} catch (Exception e) {
-			log.error(e);
+			log.error("Client request method ERROR", e);
 		}
     	
 		return future;
@@ -127,7 +149,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
 	
 	private <T> MessageProducer getClientMessageProducer(Class<T> clazz) throws JMSException {
-		
+	
 		MessageProducer producer = clientProducers.get(clazz.getName() + SERVER_QUEUE_SUFFIX); 
 				
 		if (producer == null) {
