@@ -1,5 +1,8 @@
 package com.gft.bench.events.listeners.jms;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -9,37 +12,36 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.SerializationUtils;
 
-import com.gft.bench.events.ChatEventListener;
-
-public class JmsMessageListener<T> implements MessageListener {
+public class JmsMessageListener<TResponse> implements MessageListener {
 
 	private static final Log log = LogFactory.getLog(JmsMessageListener.class);
-	private ChatEventListener chatEventListener;
-	private Class<T> clazz;
+	private ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap;
 	
-	public JmsMessageListener(Class<T> clazz, ChatEventListener chatEventListener) {
-		this.clazz = clazz;
-		this.chatEventListener = chatEventListener;
+	
+	public JmsMessageListener(ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap) {
+		this.futureRequestMap = futureRequestMap;
 	}
+	
 	
 	@Override
     public void onMessage(Message message) {
 
-		if (message instanceof BytesMessage) {
-			try {
+		try {
+			log.info("\n\nJMS messageListener\n\n");
+			if (message instanceof BytesMessage) {
 				BytesMessage msg = (BytesMessage) message;
 				byte[] byteArr = new byte[(int) msg.getBodyLength()];
 				msg.readBytes(byteArr);
 				
 				@SuppressWarnings("unchecked")
-				T event = (T) SerializationUtils.deserialize(byteArr);
+				TResponse response = (TResponse) SerializationUtils.deserialize(byteArr);
 				
-				chatEventListener.notifyListeners(clazz, event);
-				
-			} catch (JMSException e) {
-				log.error("Error in JmsMessageListener: " + e);
+				@SuppressWarnings("unchecked")
+				CompletableFuture<TResponse> futureComplete = (CompletableFuture<TResponse>) futureRequestMap.get(message.getJMSCorrelationID());
+				futureComplete.complete(response);
 			}
+		} catch (JMSException e) {
+			log.error("JmsMessageListener ERROR", e);
 		}
-
     }
 }

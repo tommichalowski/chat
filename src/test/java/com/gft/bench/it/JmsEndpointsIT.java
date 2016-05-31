@@ -56,7 +56,7 @@ public class JmsEndpointsIT {
     	broker.start();
     	return broker;
     }
-    
+       
 	
     @Test
     public void shouldReceiveResponse() throws Exception {
@@ -74,7 +74,7 @@ public class JmsEndpointsIT {
     	AddRequest request = new AddRequest();
     	request.x = 5;
     	request.y = 3;
-    	CompletableFuture<AddResponse> future = clientEndpoint.<AddRequest, AddResponse>request(request);
+    	CompletableFuture<AddResponse> future = clientEndpoint.<AddRequest, AddResponse>requestResponse(request);
     	AddResponse response = future.get(1, TimeUnit.SECONDS);
 
     	Assert.assertThat(response.z, Matchers.is(8));

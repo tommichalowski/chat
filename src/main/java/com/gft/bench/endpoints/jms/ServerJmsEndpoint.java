@@ -3,20 +3,18 @@ package com.gft.bench.endpoints.jms;
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.command.ActiveMQBytesMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.util.SerializationUtils;
 
 import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
@@ -69,27 +67,12 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 			MessageConsumer consumer = getServerMessageReceiver(clazz); 
 			consumer.setMessageListener(message -> {
 				try {
-					log.info("\n\nServer registerListener Message listener lambda\n\n");
-					if (message instanceof BytesMessage) {
-							BytesMessage msg = (BytesMessage) message;
-							byte[] byteArr = new byte[(int) msg.getBodyLength()];
-							msg.readBytes(byteArr);
-							
-							@SuppressWarnings("unchecked")
-							TRequest event = (TRequest) SerializationUtils.deserialize(byteArr);
-							TResponse response = handler.onMessage(event);
-							
-							byte[] serializedResponse = SerializationUtils.serialize(response);
-
-							ActiveMQBytesMessage responseMsg = new ActiveMQBytesMessage();
-							responseMsg.writeBytes(serializedResponse);
-							responseMsg.setCorrelationId(message.getJMSCorrelationID());
-							
-							MessageProducer producer = session.createProducer(message.getJMSReplyTo());
-			            	producer.send(message.getJMSReplyTo(), responseMsg);
-			            	//MessageProducer producer = getServerMessageProducer(clazz); //TODO: change to temporary queue with reply to???
-//							producer.send(responseMsg);
-					}
+					TRequest event = MessageBuilderUtil.buildEvent(message);
+					TResponse response = handler.onMessage(event);
+					
+					Message responseMsg = MessageBuilderUtil.buildMessage(response, message.getJMSReplyTo(), message.getJMSCorrelationID());						
+					MessageProducer producer = session.createProducer(message.getJMSReplyTo());
+	            	producer.send(message.getJMSReplyTo(), responseMsg);
 				} catch (JMSException e) {
 					log.error("Server registerListener Message listener lambda error", e);
 					e.printStackTrace();

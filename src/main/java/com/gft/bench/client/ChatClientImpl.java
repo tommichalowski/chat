@@ -137,7 +137,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     	String eventId = UUID.randomUUID().toString();
 		futureMessageMap.put(eventId, future);
 		log.info("Putting new future for event id: " + eventId);
-		clientEndpoint.sendEvent(event);
+		//clientEndpoint.sendEvent(event);
 		return future;
     }
     
