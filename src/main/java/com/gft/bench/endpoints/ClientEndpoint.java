@@ -16,6 +16,8 @@ public interface ClientEndpoint {
     
     <TRequest extends Serializable, TResponse extends Serializable> CompletableFuture<TResponse> requestResponse(TRequest request) throws JMSException;
     
+    
+    
     //void setEventListeners(ChatEventListener eventListener) throws ChatException;   
     
     void cleanup() throws JMSException; //TODO: shouldn't exist

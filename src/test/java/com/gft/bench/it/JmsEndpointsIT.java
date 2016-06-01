@@ -2,6 +2,7 @@ package com.gft.bench.it;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.broker.BrokerService;
@@ -19,12 +20,13 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
-import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.it.dto.AddRequest;
 import com.gft.bench.it.dto.AddResponse;
+import com.gft.bench.it.dto.SampleClass;
 
 public class JmsEndpointsIT {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(JmsEndpointsIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -58,7 +60,6 @@ public class JmsEndpointsIT {
        
 	
     @Test
-    //public void shouldReceiveResponse() throws Exception {
     public void clientShouldReceiveResponseCorrespondingToRequest() throws Exception {	
     	
     	startInMemoryBroker();
@@ -85,19 +86,19 @@ public class JmsEndpointsIT {
     public void serverShouldReceiveClientNotification() throws Exception {
     	
     	startInMemoryBroker();
+    	CountDownLatch latch = new CountDownLatch(1);
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-    	//TODO: JMS endpoint use RoomChangeEvent, it should create own type only for tests?
-    	serverEndpoint.<RoomChangedEvent>registerNotificationListener(RoomChangedEvent.class, notification -> {
-    		log.info("\n\nServer should implement what to do on this notification\n\n");
+    	serverEndpoint.registerNotificationListener(SampleClass.class, notification -> {
+    		latch.countDown();
     	});
     	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-    	RoomChangedEvent roomChangedEvent = new RoomChangedEvent();
-    	roomChangedEvent.room = "Movies";
-    	clientEndpoint.sendNotification(roomChangedEvent);
+    	SampleClass sampleClass = new SampleClass("Movies");
+    	clientEndpoint.sendNotification(sampleClass);
 
-    	//TODO: how to chceck that notificationHandler.onMessage() has been invoked ???
+    	boolean success = latch.await(3, TimeUnit.SECONDS);
+    	Assert.assertTrue(success);
     }
     
     
@@ -105,18 +106,19 @@ public class JmsEndpointsIT {
     public void clientShouldReceiveServerNotification() throws Exception {
     	
     	startInMemoryBroker();
+    	CountDownLatch latch = new CountDownLatch(1);
     	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-    	clientEndpoint.<RoomChangedEvent>registerNotificationListener(RoomChangedEvent.class, notification -> {
-    		log.info("\n\nClient should implement what to do on this notification\n\n");
+    	clientEndpoint.registerNotificationListener(SampleClass.class, notification -> {
+    		latch.countDown();
     	});
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-    	RoomChangedEvent roomChangedEvent = new RoomChangedEvent();
-    	roomChangedEvent.room = "Movies";
-    	serverEndpoint.sendNotification(roomChangedEvent);
+    	SampleClass sampleClass = new SampleClass("Movies");
+    	serverEndpoint.sendNotification(sampleClass);
 
-    	//TODO: how to chceck that notificationHandler.onMessage() has been invoked ???
+    	boolean success = latch.await(3, TimeUnit.SECONDS);
+    	Assert.assertTrue(success);
     }
     
 }
