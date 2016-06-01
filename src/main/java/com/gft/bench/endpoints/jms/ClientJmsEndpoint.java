@@ -18,6 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ClientEndpoint;
+import com.gft.bench.endpoints.NotificationHandler;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.exceptions.ChatException;
 
@@ -28,7 +29,7 @@ import com.gft.bench.exceptions.ChatException;
  */
 public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
-	//private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
+	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
 	private static final String SERVER_QUEUE_SUFFIX = "to.server";
 	private static final Log log = LogFactory.getLog(ClientJmsEndpoint.class);
     protected final String brokerUrl;
@@ -36,7 +37,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     protected Session session;
     MessageProducer producer;
     protected ChatEventListener eventListener;
-    //private ConcurrentHashMap<String, Destination> clientReceivers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, MessageConsumer> clientReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> clientProducers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap = new ConcurrentHashMap<>();
     
@@ -55,8 +56,31 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     }
  
 	
+    @Override
+	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
+
+		log.info("\n\nClient registerNotificationListener method, clazz name: " + clazz.getName());
+		try {
+			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
+			MessageConsumer consumer = getClientMessageReceiver(clazz); 
+			consumer.setMessageListener(message -> {
+				try {
+					T event = MessageBuilderUtil.buildEvent(message);
+					handler.onMessage(event);
+				} catch (JMSException e) {
+					log.error("Client registerNotificationListener Message listener lambda error", e);
+					e.printStackTrace();
+				}
+			});
+		} catch (JMSException e) {
+			log.error("Client registerNotificationListener Message listener lambda error", e);
+			e.printStackTrace();
+		}
+	}
+    
+    
 	@Override
-	public <T extends Serializable> void request(T request) {
+	public <T extends Serializable> void sendNotification(T request) {
 		
 		try {
 			Message message = MessageBuilderUtil.buildMessage(request);		
@@ -118,6 +142,20 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 	}
 	
 	
+	private <T> MessageConsumer getClientMessageReceiver(Class<T> clazz) throws JMSException {
+	
+		MessageConsumer consumer = clientReceivers.get(clazz.getName() + CLIENT_QUEUE_SUFFIX);	
+			
+		if (consumer == null) {
+			Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
+			consumer = session.createConsumer(queue);
+			clientReceivers.putIfAbsent(clazz.getName(), consumer);
+		}
+		
+		return consumer;
+}
+	
+	
 //	private <TResponse> void createClientReceiveTemporaryQueue(TResponse t) throws JMSException {
 //	
 //	Destination queue = session.createTemporaryQueue();
@@ -133,20 +171,11 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 //		MessageProducer producer = session.createProducer(queue);
 //		clientProducers.putIfAbsent(clazz.getName(), producer);
 //	}
-    
-    
-//	private <T> void createClientReceiveQueue(Class<T> clazz) throws JMSException {
-//		
-//		Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
-//		MessageConsumer consumer = session.createConsumer(queue);
-//		consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
-//		clientReceivers.putIfAbsent(clazz.getName(), queue);
-//	}
-		
+    		
 	
-    @Override
-    public void setEventListeners(ChatEventListener eventListener) throws ChatException {
-        
+//    @Override
+//    public void setEventListeners(ChatEventListener eventListener) throws ChatException {
+//        
 //    	this.eventListener = eventListener;
 //        
 //    	try {
@@ -160,7 +189,7 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 //        } catch (JMSException e) {
 //			throw new ChatException("Client can NOT create JMS queues!", e);
 //		}
-    }
+//    }
     
     @Override
     public void cleanup() throws JMSException {

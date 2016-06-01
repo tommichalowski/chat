@@ -37,7 +37,7 @@ public class ServerImpl implements Server, ChatEventListener {
 
     public ServerImpl(ServerEndpoint chatEndpoint) throws ChatException {
         this.chatEndpoint = chatEndpoint;
-        this.chatEndpoint.setEventListeners(this); 
+        //this.chatEndpoint.setEventListeners(this); 
         
         //registerListener(CreateUserEvent.class, new CreateUserListener());
         //registerListener(RoomChangedEvent.class, new RoomChangedListener());
@@ -82,7 +82,7 @@ public class ServerImpl implements Server, ChatEventListener {
     		} else {
     			messageEvent.setResult(RequestResult.ERROR);
     		}   		
-    		chatEndpoint.sendEvent(messageEvent);
+    		//chatEndpoint.sendEvent(messageEvent);
     		
     	} else if (event.getType() == EventType.ENTER_ROOM) {
     		MessageEvent messageEvent = (MessageEvent) event;
@@ -97,7 +97,7 @@ public class ServerImpl implements Server, ChatEventListener {
 	    			messageEvent.setResult(RequestResult.ERROR);
 	    		}
 			}
-            chatEndpoint.sendEvent(messageEvent);
+           // chatEndpoint.sendEvent(messageEvent);
 
         } else if (event.getType() == EventType.MESSAGE) {
             MessageEvent messageEvent = (MessageEvent) event;
@@ -105,7 +105,7 @@ public class ServerImpl implements Server, ChatEventListener {
             roomHistory.add(messageEvent.getData());
             log.info("Room history: " + roomHistory);
             
-            chatEndpoint.sendEvent(messageEvent);
+            //chatEndpoint.sendEvent(messageEvent);
         }
     }
     

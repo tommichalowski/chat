@@ -50,7 +50,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      */
     public ChatClientImpl(ClientEndpoint endpoint) throws ChatException {
 		this.clientEndpoint = endpoint; 
-		this.clientEndpoint.setEventListeners(this);
+		//this.clientEndpoint.setEventListeners(this);
     }
            
     

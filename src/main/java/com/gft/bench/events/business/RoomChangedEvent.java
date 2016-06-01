@@ -1,6 +1,10 @@
 package com.gft.bench.events.business;
 
-public class RoomChangedEvent {
+import java.io.Serializable;
 
+public class RoomChangedEvent implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	
 	public String room;
 }

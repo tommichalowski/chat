@@ -19,13 +19,12 @@ import com.gft.bench.endpoints.ClientEndpoint;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
+import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.it.dto.AddRequest;
 import com.gft.bench.it.dto.AddResponse;
 
 public class JmsEndpointsIT {
 
-	
-	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(JmsEndpointsIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -59,7 +58,8 @@ public class JmsEndpointsIT {
        
 	
     @Test
-    public void shouldReceiveResponse() throws Exception {
+    //public void shouldReceiveResponse() throws Exception {
+    public void clientShouldReceiveResponseCorrespondingToRequest() throws Exception {	
     	
     	startInMemoryBroker();
     	
@@ -79,4 +79,44 @@ public class JmsEndpointsIT {
 
     	Assert.assertThat(response.z, Matchers.is(8));
     }
+    
+    
+    @Test
+    public void serverShouldReceiveClientNotification() throws Exception {
+    	
+    	startInMemoryBroker();
+    	
+    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+    	//TODO: JMS endpoint use RoomChangeEvent, it should create own type only for tests?
+    	serverEndpoint.<RoomChangedEvent>registerNotificationListener(RoomChangedEvent.class, notification -> {
+    		log.info("\n\nServer should implement what to do on this notification\n\n");
+    	});
+    	
+    	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+    	RoomChangedEvent roomChangedEvent = new RoomChangedEvent();
+    	roomChangedEvent.room = "Movies";
+    	clientEndpoint.sendNotification(roomChangedEvent);
+
+    	//TODO: how to chceck that notificationHandler.onMessage() has been invoked ???
+    }
+    
+    
+    @Test
+    public void clientShouldReceiveServerNotification() throws Exception {
+    	
+    	startInMemoryBroker();
+    	
+    	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+    	clientEndpoint.<RoomChangedEvent>registerNotificationListener(RoomChangedEvent.class, notification -> {
+    		log.info("\n\nClient should implement what to do on this notification\n\n");
+    	});
+    	
+    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+    	RoomChangedEvent roomChangedEvent = new RoomChangedEvent();
+    	roomChangedEvent.room = "Movies";
+    	serverEndpoint.sendNotification(roomChangedEvent);
+
+    	//TODO: how to chceck that notificationHandler.onMessage() has been invoked ???
+    }
+    
 }

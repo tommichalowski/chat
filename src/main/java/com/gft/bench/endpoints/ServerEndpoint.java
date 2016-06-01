@@ -4,23 +4,24 @@ import java.io.Serializable;
 
 import javax.jms.JMSException;
 
-import com.gft.bench.events.ChatEventListener;
-import com.gft.bench.events.DataEvent;
-import com.gft.bench.exceptions.ChatException;
-
 /**
  * Created by tzms on 3/25/2016.
  */
 public interface ServerEndpoint {
     
+	<T extends Serializable> void sendNotification(T request);
 	
-    void sendEvent(DataEvent event);
+	<T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler);
+	
+	<TRequest extends Serializable, TResponse extends Serializable> void registerListener(
+    		Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler);
+	
+	
+	
+    //void sendEvent(DataEvent event);
     
-    void setEventListeners(ChatEventListener eventListener) throws ChatException;
-    
-    <TRequest extends Serializable, TResponse extends Serializable> void registerListener(
-    		Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler); 
-    
+    //void setEventListeners(ChatEventListener eventListener) throws ChatException;
+
     void cleanup() throws JMSException;
 }
 
