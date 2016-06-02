@@ -23,8 +23,7 @@ public class JmsRoomChangedListener implements MessageListener {
 		try {
 			if (message instanceof TextMessage) {
 				TextMessage textMsg = (TextMessage) message;
-				RoomChangedEvent event = new RoomChangedEvent();
-				event.room = textMsg.getText();
+				RoomChangedEvent event = new RoomChangedEvent(textMsg.getText());
 
 				log.info("JmsRoomChangedListener, room: " + event.room);
 				chatEventListener.notifyListeners(RoomChangedEvent.class, event);

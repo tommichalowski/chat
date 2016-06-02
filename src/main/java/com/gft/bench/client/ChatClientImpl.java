@@ -50,27 +50,35 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      */
     public ChatClientImpl(ClientEndpoint endpoint) throws ChatException {
 		this.clientEndpoint = endpoint; 
-		//this.clientEndpoint.setEventListeners(this);
     }
            
     
 	@Override
 	public CompletableFuture<CreateUserEvent> createUser(String userName) {
 		
-		CreateUserEvent event = new CreateUserEvent();
-		event.userName = userName;
-		CompletableFuture<CreateUserEvent> future = requestAsync(event);
-    	return future;
+		CompletableFuture<CreateUserEvent> future = null;
+		
+		try {
+			CreateUserEvent event = new CreateUserEvent(userName);
+			future = clientEndpoint.requestResponse(event);
+		} catch (JMSException e) {
+			e.printStackTrace();
+		}
+		
+		return future;
 	}
 	
 	
     @Override
     public CompletableFuture<RoomChangedEvent> enterToRoom(String userName, String room) {
     	
-    	RoomChangedEvent event = new RoomChangedEvent();
-    	event.room = room;
-    	CompletableFuture<RoomChangedEvent> future = requestAsync(event);
-    	return future;
+    	RoomChangedEvent event = new RoomChangedEvent(room);
+    	clientEndpoint.sendNotification(event);
+    	
+    	//TODO: should call or who should do it?   clientEndpoint.registerNotificationListener(RoomChangedEvent.class, handler);
+    	
+    	//CompletableFuture<RoomChangedEvent> future = requestAsync(event);
+    	return null;
 	}
 	
     

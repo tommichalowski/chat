@@ -23,8 +23,7 @@ public class JmsCreateUserListener implements MessageListener {
 		try {
 			if (message instanceof TextMessage) {
 				TextMessage textMsg = (TextMessage) message;
-				CreateUserEvent event = new CreateUserEvent();
-				event.userName = textMsg.getText();
+				CreateUserEvent event = new CreateUserEvent(textMsg.getText());
 
 				log.info("JmsCreateUserListener, user name: " + event.userName);
 				chatEventListener.notifyListeners(CreateUserEvent.class, event);

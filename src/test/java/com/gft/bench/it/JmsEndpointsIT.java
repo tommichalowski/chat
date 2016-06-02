@@ -75,7 +75,7 @@ public class JmsEndpointsIT {
     	AddRequest request = new AddRequest();
     	request.x = 5;
     	request.y = 3;
-    	CompletableFuture<AddResponse> future = clientEndpoint.<AddRequest, AddResponse>requestResponse(request);
+    	CompletableFuture<AddResponse> future = clientEndpoint.requestResponse(request);
     	AddResponse response = future.get(1, TimeUnit.SECONDS);
 
     	Assert.assertThat(response.z, Matchers.is(8));

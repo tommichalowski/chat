@@ -10,6 +10,7 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
@@ -40,6 +41,8 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     private ConcurrentHashMap<String, MessageConsumer> clientReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> clientProducers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap = new ConcurrentHashMap<>();
+	@SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, MessageListener> messageListeners = new ConcurrentHashMap<>();
     
 
     public ClientJmsEndpoint(String brokerUrl) throws ChatException {
@@ -54,16 +57,16 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 			throw new ChatException("Client can NOT create JMS connection!", e);
 		}
     }
- 
+
 	
     @Override
 	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
 
 		log.info("\n\nClient registerNotificationListener method, clazz name: " + clazz.getName());
-		try {
-			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
+		try {		
+			defineListener(clazz, handler); //TODO: where to put it
 			MessageConsumer consumer = getClientMessageReceiver(clazz); 
-			consumer.setMessageListener(message -> {
+			consumer.setMessageListener(message -> { //TODO: then this is duplication to delete
 				try {
 					T event = MessageBuilderUtil.buildEvent(message);
 					handler.onMessage(event);
@@ -75,6 +78,23 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 		} catch (JMSException e) {
 			log.error("Client registerNotificationListener Message listener lambda error", e);
 			e.printStackTrace();
+		}
+	}
+
+
+	private synchronized <T extends Serializable> void defineListener(Class<T> clazz, NotificationHandler<T> handler) {
+		
+		if (messageListeners.get(clazz) == null) {
+			MessageListener listener = message -> {
+				try {
+					T event = MessageBuilderUtil.buildEvent(message);
+					handler.onMessage(event);
+				} catch (JMSException e) {
+					log.error("Client defineListener error", e);
+					e.printStackTrace();
+				}
+			};
+			messageListeners.put(clazz, listener);
 		}
 	}
     
@@ -93,8 +113,8 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
 	
 	@Override
-	public <TRequest extends Serializable, TResponse extends Serializable> CompletableFuture<TResponse> requestResponse(TRequest request) 
-			throws JMSException {
+	public <TRequest extends Serializable, TResponse extends Serializable> CompletableFuture<TResponse> requestResponse(
+			TRequest request) throws JMSException {
 		
 		CompletableFuture<TResponse> future = new CompletableFuture<TResponse>();
 		String correlationId = UUID.randomUUID().toString();
@@ -142,13 +162,14 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 	}
 	
 	
-	private <T> MessageConsumer getClientMessageReceiver(Class<T> clazz) throws JMSException {
+	private synchronized <T> MessageConsumer getClientMessageReceiver(Class<T> clazz) throws JMSException {
 	
 		MessageConsumer consumer = clientReceivers.get(clazz.getName() + CLIENT_QUEUE_SUFFIX);	
 			
 		if (consumer == null) {
 			Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
 			consumer = session.createConsumer(queue);
+			consumer.setMessageListener(messageListeners.get(clazz));
 			clientReceivers.putIfAbsent(clazz.getName(), consumer);
 		}
 		
