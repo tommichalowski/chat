@@ -3,7 +3,6 @@ package com.gft.bench.client;
 import java.util.concurrent.CompletableFuture;
 
 import com.gft.bench.events.business.CreateUserEvent;
-import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -18,7 +17,7 @@ public interface ChatClient {
      *  
      * @return CompletableFuture<BusinessEvent> object generated for this request. 
      */
-	CompletableFuture<RoomChangedEvent> enterToRoom(String userName, String room);
+	void enterToRoom(String userName, String room);
     
 	//public void asyncEventReceived(BusinessEvent event);
 	

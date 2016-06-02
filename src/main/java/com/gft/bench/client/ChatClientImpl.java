@@ -50,6 +50,11 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
      */
     public ChatClientImpl(ClientEndpoint endpoint) throws ChatException {
 		this.clientEndpoint = endpoint; 
+		
+		//TODO: should call or who should do it?   
+    	//clientEndpoint.registerNotificationListener(RoomChangedEvent.class, notification -> {
+    	//	log.info("\n\nAction on client received RoomChangedEvent.class\n\n");
+    	//});
     }
            
     
@@ -70,15 +75,9 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	
 	
     @Override
-    public CompletableFuture<RoomChangedEvent> enterToRoom(String userName, String room) {
-    	
+    public void enterToRoom(String userName, String room) {
     	RoomChangedEvent event = new RoomChangedEvent(room);
     	clientEndpoint.sendNotification(event);
-    	
-    	//TODO: should call or who should do it?   clientEndpoint.registerNotificationListener(RoomChangedEvent.class, handler);
-    	
-    	//CompletableFuture<RoomChangedEvent> future = requestAsync(event);
-    	return null;
 	}
 	
     

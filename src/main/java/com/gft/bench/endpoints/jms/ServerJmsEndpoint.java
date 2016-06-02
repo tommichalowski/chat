@@ -24,10 +24,10 @@ import com.gft.bench.exceptions.ChatException;
 /**
  * Created by tzms on 3/31/2016.
  */
-public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
+public class ServerJmsEndpoint implements ServerEndpoint {
 
 	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
-	private static final String SERVER_QUEUE_SUFFIX = "to.server";
+	private static final String SERVER_QUEUE_SUFFIX = ".to.server";
     private static final Log log = LogFactory.getLog(ServerJmsEndpoint.class);
     protected final String brokerUrl;
     protected ActiveMQConnectionFactory connectionFactory;
@@ -121,6 +121,7 @@ public class ServerJmsEndpoint implements ServerEndpoint, JmsEndpoint {
 		
     	MessageConsumer consumer = serverReceivers.get(clazz.getName());
     	if (consumer == null) {
+    		log.info("\n\nServer created receiver: " + clazz.getName() + SERVER_QUEUE_SUFFIX);
     		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
     		consumer = session.createConsumer(queue);
     		//consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));

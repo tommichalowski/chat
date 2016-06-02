@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -19,8 +20,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ClientEndpoint;
+import com.gft.bench.endpoints.DestinationType;
 import com.gft.bench.endpoints.NotificationHandler;
-import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.exceptions.ChatException;
 
 /**
@@ -28,21 +29,21 @@ import com.gft.bench.exceptions.ChatException;
  * @param <T>
  * @param <T>
  */
-public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
+public class ClientJmsEndpoint implements ClientEndpoint {
 
-	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
-	private static final String SERVER_QUEUE_SUFFIX = "to.server";
 	private static final Log log = LogFactory.getLog(ClientJmsEndpoint.class);
     protected final String brokerUrl;
     private Connection connection;
     protected Session session;
-    MessageProducer producer;
-    protected ChatEventListener eventListener;
+    private ConcurrentHashMap<String, Destination> clientReceiversQueue = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageConsumer> clientReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> clientProducers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, CompletableFuture<?>> futureRequestMap = new ConcurrentHashMap<>();
 	@SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, MessageListener> messageListeners = new ConcurrentHashMap<>();
+	@SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, CopyOnWriteArrayList<NotificationHandler<?>>> notificationHandlers = new ConcurrentHashMap<>();
+
     
 
     public ClientJmsEndpoint(String brokerUrl) throws ChatException {
@@ -64,47 +65,23 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 
 		log.info("\n\nClient registerNotificationListener method, clazz name: " + clazz.getName());
 		try {		
-			defineListener(clazz, handler); //TODO: where to put it
-			MessageConsumer consumer = getClientMessageReceiver(clazz); 
-			consumer.setMessageListener(message -> { //TODO: then this is duplication to delete
-				try {
-					T event = MessageBuilderUtil.buildEvent(message);
-					handler.onMessage(event);
-				} catch (JMSException e) {
-					log.error("Client registerNotificationListener Message listener lambda error", e);
-					e.printStackTrace();
-				}
-			});
+			JmsEndpointUtils.registerHandler(clazz, handler, notificationHandlers);
+			JmsEndpointUtils.defineNotificationListener(clazz, messageListeners, notificationHandlers); //TODO: where to put it
+			JmsEndpointUtils.getMessageReceiver(clazz, clientReceivers, messageListeners, session, DestinationType.CLIENT); 
 		} catch (JMSException e) {
 			log.error("Client registerNotificationListener Message listener lambda error", e);
 			e.printStackTrace();
 		}
 	}
 
-
-	private synchronized <T extends Serializable> void defineListener(Class<T> clazz, NotificationHandler<T> handler) {
-		
-		if (messageListeners.get(clazz) == null) {
-			MessageListener listener = message -> {
-				try {
-					T event = MessageBuilderUtil.buildEvent(message);
-					handler.onMessage(event);
-				} catch (JMSException e) {
-					log.error("Client defineListener error", e);
-					e.printStackTrace();
-				}
-			};
-			messageListeners.put(clazz, listener);
-		}
-	}
-    
     
 	@Override
 	public <T extends Serializable> void sendNotification(T request) {
 		
 		try {
 			Message message = MessageBuilderUtil.buildMessage(request);		
-			MessageProducer producer = getClientMessageProducer(request.getClass());
+			MessageProducer producer = JmsEndpointUtils.getMessageProducer(request.getClass(), clientProducers, 
+					session, DestinationType.SERVER);
 			producer.send(message); 
 		} catch (JMSException e) {
 			log.error("Client request method ERROR", e);
@@ -121,24 +98,13 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
     	futureRequestMap.put(correlationId, future);
     	
 		try {
-			Destination tempDest = session.createTemporaryQueue();
-			MessageConsumer responseConsumer = session.createConsumer(tempDest);
-			responseConsumer.setMessageListener(message -> {
-				try {
-					log.info("\n\nClient request method message listener lambda\n\n");
-					TResponse response = MessageBuilderUtil.buildEvent(message);
-					
-					@SuppressWarnings("unchecked")
-					CompletableFuture<TResponse> futureComplete = (CompletableFuture<TResponse>) 
-						futureRequestMap.get(message.getJMSCorrelationID());
-					futureComplete.complete(response);
-				} catch (JMSException e) {
-					log.error("Client requestResponse method ERROR", e);
-				}
-			}); 
+			JmsEndpointUtils.defineRequestResponseListener(request.getClass(), messageListeners, futureRequestMap);
+			JmsEndpointUtils.getTemporaryMessageReceiver(request.getClass(), messageListeners, clientReceivers, clientReceiversQueue, session);
 
-			Message message = MessageBuilderUtil.buildMessage(request, tempDest, correlationId);	
-			MessageProducer producer = getClientMessageProducer(request.getClass());
+			Destination replyTo = clientReceiversQueue.get(request.getClass().getName());
+			Message message = MessageBuilderUtil.buildMessage(request, replyTo, correlationId);	
+			MessageProducer producer = JmsEndpointUtils.getMessageProducer(request.getClass(), clientProducers, 
+					session, DestinationType.SERVER);
 			producer.send(message); 	
 		} catch (Exception e) {
 			log.error("Client requestResponse method ERROR", e);
@@ -148,75 +114,17 @@ public class ClientJmsEndpoint implements ClientEndpoint, JmsEndpoint {
 	}
 
 	
-	private <T> MessageProducer getClientMessageProducer(Class<T> clazz) throws JMSException {
-	
-		MessageProducer producer = clientProducers.get(clazz.getName() + SERVER_QUEUE_SUFFIX); 
-				
-		if (producer == null) {
-			Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-			producer = session.createProducer(queue);
-			clientProducers.putIfAbsent(clazz.getName(), producer);
-		}
-		
-		return producer;
-	}
-	
-	
-	private synchronized <T> MessageConsumer getClientMessageReceiver(Class<T> clazz) throws JMSException {
-	
-		MessageConsumer consumer = clientReceivers.get(clazz.getName() + CLIENT_QUEUE_SUFFIX);	
-			
-		if (consumer == null) {
-			Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
-			consumer = session.createConsumer(queue);
-			consumer.setMessageListener(messageListeners.get(clazz));
-			clientReceivers.putIfAbsent(clazz.getName(), consumer);
-		}
-		
-		return consumer;
-}
-	
-	
-//	private <TResponse> void createClientReceiveTemporaryQueue(TResponse t) throws JMSException {
-//	
-//	Destination queue = session.createTemporaryQueue();
-//	MessageConsumer consumer = session.createConsumer(queue);
-//	consumer.setMessageListener(new JmsMessageListener<TResponse>(futureRequestMap));
-//	//clientReceivers.putIfAbsent(clazz.getName(), queue);
-//}
-	
-	
-//    private <T> void createClientProducerQueue(Class<T> clazz) throws JMSException {
-//		
-//		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-//		MessageProducer producer = session.createProducer(queue);
-//		clientProducers.putIfAbsent(clazz.getName(), producer);
-//	}
-    		
-	
-//    @Override
-//    public void setEventListeners(ChatEventListener eventListener) throws ChatException {
-//        
-//    	this.eventListener = eventListener;
-//        
-//    	try {
-//	        createClientReceiveQueue(ChatMessageEvent.class);
-//	    	createClientReceiveTemporaryQueue(CreateUserEvent.class);
-//	    	createClientReceiveTemporaryQueue(RoomChangedEvent.class);
-//	
-//	    	createClientProducerQueue(ChatMessageEvent.class);
-//	    	createClientProducerQueue(CreateUserEvent.class);
-//	    	createClientProducerQueue(RoomChangedEvent.class);
-//        } catch (JMSException e) {
-//			throw new ChatException("Client can NOT create JMS queues!", e);
-//		}
-//    }
-    
     @Override
     public void cleanup() throws JMSException {
-    	if (producer != null) {
+    	
+    	for (MessageConsumer consumer : clientReceivers.values()) {
+    		consumer.close();
+    	}
+    	
+    	for (MessageProducer producer : clientProducers.values()) {
     		producer.close();
     	}
+
     	if (session != null) {
     		session.close();
     	}

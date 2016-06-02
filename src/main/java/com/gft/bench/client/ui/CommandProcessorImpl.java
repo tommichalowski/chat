@@ -41,7 +41,7 @@ public class CommandProcessorImpl implements CommandProcessor {
 						future = chatClient.createUser(msg);
 						break;
 					case ENTER_ROOM:
-						future = chatClient.enterToRoom("UserName", "Movies");
+						chatClient.enterToRoom("UserName", "Movies");
 					default:
 						break;
 				}

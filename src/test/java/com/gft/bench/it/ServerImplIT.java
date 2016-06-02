@@ -2,13 +2,16 @@ package com.gft.bench.it;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.gft.bench.Disposer;
@@ -22,7 +25,6 @@ import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
 import com.gft.bench.events.listeners.business.CreateUserListener;
-import com.gft.bench.events.listeners.business.RoomChangedListener;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -31,7 +33,6 @@ import com.gft.bench.server.ServerImpl;
  */
 public class ServerImplIT {
 
-	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(ServerImplIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -140,7 +141,7 @@ public class ServerImplIT {
     }
     
     
-    //@Test
+    @Test
     public void enteringToNewRoomShouldResultWithRoomChangedNotification() throws Exception {
 
     	startInMemoryBroker();
@@ -153,8 +154,11 @@ public class ServerImplIT {
         ChatClientImpl chatClient = Mockito.spy(new ChatClientImpl(clientEndpoint));
         disposables.add(() -> chatClient.stopClient());
 
-        RoomChangedListener listener = Mockito.spy(new RoomChangedListener());
-        chatClient.registerListener(RoomChangedEvent.class, listener);
+        CountDownLatch latch = new CountDownLatch(1);
+        clientEndpoint.registerNotificationListener(RoomChangedEvent.class, notification -> {
+    		log.info("\n\nAction on client received RoomChangedEvent.class\n\n");
+    		latch.countDown();
+    	});
         
         String room = "Music";
         String userName = "Ania";
@@ -163,16 +167,12 @@ public class ServerImplIT {
         
         chatClient.enterToRoom(userName, room);
         
-//        RoomChanged testEvent = new RoomChanged(); 
-//        listener.onEvent(testEvent);
-        
-        TimeUnit.SECONDS.sleep(1);
-
-        Mockito.verify(listener, Mockito.times(1)).onEvent(Mockito.isA(RoomChangedEvent.class));
+        boolean success = latch.await(3, TimeUnit.SECONDS);
+    	Assert.assertTrue(success); 
     }
     
     
-    //@Test
+    @Test
     public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
 
 	    	startInMemoryBroker();
@@ -185,12 +185,18 @@ public class ServerImplIT {
 	        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
 	        disposables.add(() -> chatClient.stopClient());
 	        
+	        CountDownLatch latch = new CountDownLatch(1);
+	        clientEndpoint.registerNotificationListener(RoomChangedEvent.class, notification -> {
+        		log.info("\n\nAction on client received RoomChangedEvent.class\n\n");
+        		latch.countDown();
+        	});
+	        
 	        String room = "Music";
 	        String userName = "Ania";
-	        CompletableFuture<RoomChangedEvent> future = chatClient.enterToRoom(userName, room);
-	        RoomChangedEvent result = future.get();
+	        chatClient.enterToRoom(userName, room);
 	        
-	       // Assert.assertEquals(RequestResult.ERROR, result.getResult());	   
+	        boolean success = latch.await(3, TimeUnit.SECONDS);
+	    	Assert.assertTrue(success);  
     }
 
 }
