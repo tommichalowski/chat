@@ -1,6 +1,5 @@
 package com.gft.bench.client;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,11 +21,11 @@ import com.gft.bench.exceptions.ChatException;
  */
 public class ChatClientImpl implements ChatClient, ChatEventListener {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(ChatClientImpl.class);
     private static final String BROKER_URL = "tcp://localhost:61616";
     
     private ClientEndpoint clientEndpoint;
-    private ConcurrentHashMap<String, CompletableFuture<?>> futureMessageMap = new ConcurrentHashMap<>();
     @SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
 
@@ -138,14 +137,14 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 		}
     }
   
-    private <T> CompletableFuture<T> requestAsync(T event) {
-    	
-    	CompletableFuture<T> future = new CompletableFuture<T>();
-    	String eventId = UUID.randomUUID().toString();
-		futureMessageMap.put(eventId, future);
-		log.info("Putting new future for event id: " + eventId);
-		//clientEndpoint.sendEvent(event);
-		return future;
-    }
+//    private <T> CompletableFuture<T> requestAsync(T event) {
+//    	
+//    	CompletableFuture<T> future = new CompletableFuture<T>();
+//    	String eventId = UUID.randomUUID().toString();
+//		futureMessageMap.put(eventId, future);
+//		log.info("Putting new future for event id: " + eventId);
+//		//clientEndpoint.sendEvent(event);
+//		return future;
+//    }
     
 }

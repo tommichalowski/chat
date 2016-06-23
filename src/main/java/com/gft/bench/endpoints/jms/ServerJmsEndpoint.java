@@ -2,12 +2,13 @@ package com.gft.bench.endpoints.jms;
 
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.jms.Connection;
-import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
@@ -15,6 +16,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.DestinationType;
 import com.gft.bench.endpoints.NotificationHandler;
 import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
@@ -26,8 +28,8 @@ import com.gft.bench.exceptions.ChatException;
  */
 public class ServerJmsEndpoint implements ServerEndpoint {
 
-	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
-	private static final String SERVER_QUEUE_SUFFIX = ".to.server";
+//	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
+//	private static final String SERVER_QUEUE_SUFFIX = ".to.server";
     private static final Log log = LogFactory.getLog(ServerJmsEndpoint.class);
     protected final String brokerUrl;
     protected ActiveMQConnectionFactory connectionFactory;
@@ -37,7 +39,12 @@ public class ServerJmsEndpoint implements ServerEndpoint {
     protected ChatEventListener eventListener;
     private ConcurrentHashMap<String, MessageConsumer> serverReceivers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, MessageProducer> serverProducers = new ConcurrentHashMap<>();
-
+	@SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, MessageListener> messageListeners = new ConcurrentHashMap<>();
+	@SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, CopyOnWriteArrayList<NotificationHandler<?>>> notificationHandlers = new ConcurrentHashMap<>();
+	@SuppressWarnings("rawtypes")
+	private ConcurrentHashMap<Class, CopyOnWriteArrayList<RequestHandler<?, ?>>> requestHandlers = new ConcurrentHashMap<>();
     
     public ServerJmsEndpoint(String brokerUrl) throws ChatException {
         
@@ -54,11 +61,41 @@ public class ServerJmsEndpoint implements ServerEndpoint {
     
     
     @Override
+	public <TRequest extends Serializable, TResponse extends Serializable> void registerRequestResponseListener(
+			Class<TRequest> tRequest, Class<TResponse> tResponse, RequestHandler<TRequest, TResponse> handler) {
+
+		log.info("\n\n" + DestinationType.SERVER + "registerRequestResponseListener method, clazz name: " + tRequest.getName());
+		try {	
+			JmsEndpointUtils.registerRequestResponseHandler(tRequest, handler, requestHandlers);
+			JmsEndpointUtils.defineRequestReciverListener(tRequest, tResponse, messageListeners, requestHandlers, session);
+			JmsEndpointUtils.getMessageReceiver(tRequest, serverReceivers, messageListeners, session, DestinationType.SERVER); 
+		} catch (JMSException e) {
+			log.error("Server registerNotificationListener Message listener lambda error", e);
+			e.printStackTrace();
+		}
+	}
+    
+    @Override
+	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
+
+		log.info("\n\n" + DestinationType.SERVER + " registerNotificationListener method, clazz name: " + clazz.getName());
+		try {		
+			JmsEndpointUtils.registerNotificationHandler(clazz, handler, notificationHandlers);
+			JmsEndpointUtils.defineNotificationListener(clazz, messageListeners, notificationHandlers);
+			JmsEndpointUtils.getMessageReceiver(clazz, serverReceivers, messageListeners, session, DestinationType.SERVER); 
+		} catch (JMSException e) {
+			log.error("Server registerNotificationListener Message listener lambda error", e);
+			e.printStackTrace();
+		}
+	}
+
+    	
+    @Override
 	public <T extends Serializable> void sendNotification(T request) {
 		
 		try {
 			Message message = MessageBuilderUtil.buildMessage(request);		
-			MessageProducer producer = getServerMessageProducer(request.getClass());
+			MessageProducer producer = JmsEndpointUtils.getMessageProducer(request.getClass(), serverProducers, session, DestinationType.CLIENT); 
 			producer.send(message); 
 		} catch (JMSException e) {
 			log.error("Server request method ERROR", e);
@@ -66,83 +103,48 @@ public class ServerJmsEndpoint implements ServerEndpoint {
 	}
     
     
-	@Override
-	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
-
-		log.info("\n\nServer registerNotificationListener method, clazz name: " + clazz.getName());
-		try {
-			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
-			MessageConsumer consumer = getServerMessageReceiver(clazz); 
-			consumer.setMessageListener(message -> {
-				try {
-					T event = MessageBuilderUtil.buildEvent(message);
-					handler.onMessage(event);
-				} catch (JMSException e) {
-					log.error("Server registerNotificationListener Message listener lambda error", e);
-					e.printStackTrace();
-				}
-			});
-		} catch (JMSException e) {
-			log.error("Server registerNotificationListener Message listener lambda error", e);
-			e.printStackTrace();
-		}
-	}
-	
-    
-	@Override
-	public <TRequest extends Serializable, TResponse extends Serializable> void registerListener(
-			Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
-
-		log.info("\n\nServer registerListener method, clazz name: " + clazz.getName());
-		try {
-			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
-			MessageConsumer consumer = getServerMessageReceiver(clazz); 
-			consumer.setMessageListener(message -> {
-				try {
-					TRequest event = MessageBuilderUtil.buildEvent(message);
-					TResponse response = handler.onMessage(event);
-					
-					Message responseMsg = MessageBuilderUtil.buildMessage(response, message.getJMSReplyTo(), message.getJMSCorrelationID());						
-					MessageProducer producer = session.createProducer(message.getJMSReplyTo());
-	            	producer.send(message.getJMSReplyTo(), responseMsg);
-				} catch (JMSException e) {
-					log.error("Server registerListener Message listener lambda error", e);
-					e.printStackTrace();
-				}
-			});
-		} catch (JMSException e) {
-			log.error("Server registerListener Message listener lambda error", e);
-			e.printStackTrace();
-		}
-	}
+//	@Override
+//	public <TRequest extends Serializable, TResponse extends Serializable> void registerListener(
+//			Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
+//
+//		log.info("\n\nServer registerListener method, clazz name: " + clazz.getName());
+//		try {
+//			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
+//			MessageConsumer consumer = getServerMessageReceiver(clazz); 
+//			consumer.setMessageListener(message -> {
+//				try {
+//					TRequest event = MessageBuilderUtil.buildEvent(message);
+//					TResponse response = handler.onMessage(event);
+//					
+//					Message responseMsg = MessageBuilderUtil.buildMessage(response, message.getJMSReplyTo(), message.getJMSCorrelationID());						
+//					MessageProducer producer = session.createProducer(message.getJMSReplyTo());
+//	            	producer.send(message.getJMSReplyTo(), responseMsg);
+//				} catch (JMSException e) {
+//					log.error("Server registerListener Message listener lambda error", e);
+//					e.printStackTrace();
+//				}
+//			});
+//		} catch (JMSException e) {
+//			log.error("Server registerListener Message listener lambda error", e);
+//			e.printStackTrace();
+//		}
+//	}
 	   	
 	
-    private synchronized <T> MessageConsumer getServerMessageReceiver(Class<T> clazz) throws JMSException {
-		
-    	MessageConsumer consumer = serverReceivers.get(clazz.getName());
-    	if (consumer == null) {
-    		log.info("\n\nServer created receiver: " + clazz.getName() + SERVER_QUEUE_SUFFIX);
-    		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-    		consumer = session.createConsumer(queue);
-    		//consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
-    		serverReceivers.putIfAbsent(clazz.getName(), consumer);
-    	}
-    	
-    	return consumer;
-	}
-    
-    private synchronized <T> MessageProducer getServerMessageProducer(Class<T> clazz) throws JMSException {
-		
-    	MessageProducer producer = serverProducers.get(clazz);
-    	if (producer == null) {
-			Destination queue = session.createQueue(clazz.getName() + CLIENT_QUEUE_SUFFIX);
-    		producer = session.createProducer(queue);
-			serverProducers.putIfAbsent(clazz.getName(), producer);
-    	}
-    	
-    	return producer;
-	}
-        
+//    private synchronized <T> MessageConsumer getServerMessageReceiver(Class<T> clazz) throws JMSException {
+//		
+//    	MessageConsumer consumer = serverReceivers.get(clazz.getName());
+//    	if (consumer == null) {
+//    		log.info("\n\nServer created receiver: " + clazz.getName() + SERVER_QUEUE_SUFFIX);
+//    		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
+//    		consumer = session.createConsumer(queue);
+//    		//consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
+//    		serverReceivers.putIfAbsent(clazz.getName(), consumer);
+//    	}
+//    	
+//    	return consumer;
+//	}
+           
 
 //    @Override
 //    public void sendEvent(DataEvent event) {

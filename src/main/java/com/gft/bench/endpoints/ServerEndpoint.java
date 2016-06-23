@@ -13,8 +13,10 @@ public interface ServerEndpoint {
 	
 	<T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler);
 	
-	<TRequest extends Serializable, TResponse extends Serializable> void registerListener(
-    		Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler);
+	<TRequest extends Serializable, TResponse extends Serializable> void registerRequestResponseListener(
+			Class<TRequest> tRequest, Class<TResponse> tResponse, RequestHandler<TRequest, TResponse> handler);
+//	<TRequest extends Serializable, TResponse extends Serializable> void registerListener(
+//    		Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler);
 	
 	
 	

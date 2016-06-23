@@ -26,7 +26,6 @@ import com.gft.bench.it.dto.SampleClass;
 
 public class JmsEndpointsIT {
 
-	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(JmsEndpointsIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -65,10 +64,12 @@ public class JmsEndpointsIT {
     	startInMemoryBroker();
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-    	serverEndpoint.<AddRequest, AddResponse>registerListener(AddRequest.class, request -> {
-    		AddResponse response = new AddResponse();
-    		response.z = request.x + request.y;
-    		return response;
+    	serverEndpoint.<AddRequest, AddResponse>registerRequestResponseListener(AddRequest.class, AddResponse.class,
+    		request -> {
+    			log.info("\n\n\nINNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\n\n\n");
+	    		AddResponse response = new AddResponse();
+	    		response.z = request.x + request.y;
+	    		return response;
     	});
     	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
