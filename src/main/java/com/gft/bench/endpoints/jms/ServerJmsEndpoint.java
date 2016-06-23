@@ -28,8 +28,6 @@ import com.gft.bench.exceptions.ChatException;
  */
 public class ServerJmsEndpoint implements ServerEndpoint {
 
-//	private static final String CLIENT_QUEUE_SUFFIX = ".to.client";
-//	private static final String SERVER_QUEUE_SUFFIX = ".to.server";
     private static final Log log = LogFactory.getLog(ServerJmsEndpoint.class);
     protected final String brokerUrl;
     protected ActiveMQConnectionFactory connectionFactory;
@@ -46,6 +44,7 @@ public class ServerJmsEndpoint implements ServerEndpoint {
 	@SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, CopyOnWriteArrayList<RequestHandler<?, ?>>> requestHandlers = new ConcurrentHashMap<>();
     
+	
     public ServerJmsEndpoint(String brokerUrl) throws ChatException {
         
     	this.brokerUrl = brokerUrl;
@@ -102,89 +101,6 @@ public class ServerJmsEndpoint implements ServerEndpoint {
 		}
 	}
     
-    
-//	@Override
-//	public <TRequest extends Serializable, TResponse extends Serializable> void registerListener(
-//			Class<TRequest> clazz, RequestHandler<TRequest, TResponse> handler) {
-//
-//		log.info("\n\nServer registerListener method, clazz name: " + clazz.getName());
-//		try {
-//			//TODO: only one handler for type possible. Add handler to map and after deserialization iterate map? 
-//			MessageConsumer consumer = getServerMessageReceiver(clazz); 
-//			consumer.setMessageListener(message -> {
-//				try {
-//					TRequest event = MessageBuilderUtil.buildEvent(message);
-//					TResponse response = handler.onMessage(event);
-//					
-//					Message responseMsg = MessageBuilderUtil.buildMessage(response, message.getJMSReplyTo(), message.getJMSCorrelationID());						
-//					MessageProducer producer = session.createProducer(message.getJMSReplyTo());
-//	            	producer.send(message.getJMSReplyTo(), responseMsg);
-//				} catch (JMSException e) {
-//					log.error("Server registerListener Message listener lambda error", e);
-//					e.printStackTrace();
-//				}
-//			});
-//		} catch (JMSException e) {
-//			log.error("Server registerListener Message listener lambda error", e);
-//			e.printStackTrace();
-//		}
-//	}
-	   	
-	
-//    private synchronized <T> MessageConsumer getServerMessageReceiver(Class<T> clazz) throws JMSException {
-//		
-//    	MessageConsumer consumer = serverReceivers.get(clazz.getName());
-//    	if (consumer == null) {
-//    		log.info("\n\nServer created receiver: " + clazz.getName() + SERVER_QUEUE_SUFFIX);
-//    		Destination queue = session.createQueue(clazz.getName() + SERVER_QUEUE_SUFFIX);
-//    		consumer = session.createConsumer(queue);
-//    		//consumer.setMessageListener(new JmsMessageListener<T>(clazz, this.eventListener));
-//    		serverReceivers.putIfAbsent(clazz.getName(), consumer);
-//    	}
-//    	
-//    	return consumer;
-//	}
-           
-
-//    @Override
-//    public void sendEvent(DataEvent event) {
-//
-//        try {
-//            TextMessage textMsg = EventBuilderUtil.buildTextMessage(event);
-//            
-//            if (event.getType().isRequestResponse()) {
-//            	MessageProducer producer = session.createProducer(textMsg.getJMSReplyTo());
-//            	producer.send(textMsg.getJMSReplyTo(), textMsg);
-//            } else {
-//            	Destination destination = session.createQueue(MESSAGE_QUEUE_TO_CLIENT);
-//                MessageProducer producer = session.createProducer(destination);
-//            	producer.send(textMsg);
-//            }
-//        } catch (JMSException e) {
-//        	log.error("ERROR on server create user!!!");
-//            e.printStackTrace();
-//        }
-//    }
-
-    
-//	@Override
-//	public void setEventListeners(ChatEventListener eventListener) throws ChatException {
-//		
-//		this.eventListener = eventListener;
-//		
-//		try {
-//			getServerMessageReceiver(ChatMessageEvent.class);
-//			getServerMessageReceiver(CreateUserEvent.class);
-//			getServerMessageReceiver(RoomChangedEvent.class);
-//	
-//	        getServerMessageProducer(ChatMessageEvent.class);
-//	        getServerMessageProducer(CreateUserEvent.class);
-//	        getServerMessageProducer(RoomChangedEvent.class);
-//		} catch (JMSException e) {
-//			throw new ChatException("Server can NOT create JMS queues!", e);
-//		}
-//	}
-	
     
     @Override
     public void cleanup() throws JMSException {

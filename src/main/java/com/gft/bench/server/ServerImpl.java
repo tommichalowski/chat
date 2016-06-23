@@ -1,5 +1,6 @@
 package com.gft.bench.server;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,6 +11,7 @@ import javax.jms.JMSException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.DataEvent;
@@ -28,15 +30,15 @@ public class ServerImpl implements Server, ChatEventListener {
 	
     private static final Log log = LogFactory.getLog(ServerImpl.class);
     private static final int ROOM_HISTORY_MAX_SIZE = 10;
-    private ServerEndpoint chatEndpoint;
+    private ServerEndpoint serverEndpoint;
     @SuppressWarnings("rawtypes")
 	private ConcurrentHashMap<Class, EventListener> eventListeners = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, LinkedList<String>> roomsHistory = new ConcurrentHashMap<String, LinkedList<String>>();
     private ConcurrentSkipListSet<String> usersLogins = new ConcurrentSkipListSet<>();
 
 
-    public ServerImpl(ServerEndpoint chatEndpoint) throws ChatException {
-        this.chatEndpoint = chatEndpoint;
+    public ServerImpl(ServerEndpoint serverEndpoint) throws ChatException {
+        this.serverEndpoint = serverEndpoint;
         //this.chatEndpoint.setEventListeners(this); 
         
         //registerListener(CreateUserEvent.class, new CreateUserListener());
@@ -44,6 +46,14 @@ public class ServerImpl implements Server, ChatEventListener {
         //registerListener(ChatMessageEvent.class, new ChatMessageListener());
     }
 
+    
+    @Override
+    public <TRequest extends Serializable, TResponse extends Serializable> void registerRequestResponseListener(
+    		Class<TRequest> tRequest, Class<TResponse> tResponse, RequestHandler<TRequest, TResponse> handler) {
+    	
+    	serverEndpoint.registerRequestResponseListener(tRequest, tResponse, handler);
+    }
+    
     
     @Override
 	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
@@ -144,7 +154,7 @@ public class ServerImpl implements Server, ChatEventListener {
     public void stopServer() throws ChatException { 
     	try {
     		log.info("Stopping server.");
-			chatEndpoint.cleanup();
+			serverEndpoint.cleanup();
 			log.info("Server stopped.");
 		} catch (JMSException e) {
 			throw new ChatException(e);
@@ -166,5 +176,11 @@ public class ServerImpl implements Server, ChatEventListener {
     	}
     	return history.toString();
     }
+
+
+    @Override
+	public ConcurrentSkipListSet<String> getUsersLogins() {
+		return usersLogins;
+	}
 
 }

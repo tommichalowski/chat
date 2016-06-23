@@ -24,7 +24,7 @@ import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
-import com.gft.bench.events.listeners.business.CreateUserListener;
+import com.gft.bench.events.handlers.CreateUserHandler;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
 
@@ -66,7 +66,7 @@ public class ServerImplIT {
 
 
     @Test
-    public void createUserRequestShouldSucceed() throws Exception {
+    public void createUserRequestResponseShouldSucceed() throws Exception {
     	
     	startInMemoryBroker();
     	
@@ -77,10 +77,18 @@ public class ServerImplIT {
         ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
         ChatClient chatClient = new ChatClientImpl(clientEndpoint);
         disposables.add(() -> chatClient.stopClient());
+
+        server.registerRequestResponseListener(CreateUserEvent.class, CreateUserEvent.class, new CreateUserHandler(server));
         
-        //CreateUserListener listener = (CreateUserListener) Mockito.spy(server.getEventListener(CreateUserEvent.class));
-        CreateUserListener listener = Mockito.spy(new CreateUserListener());
-        server.registerListener(CreateUserEvent.class, listener);
+//        server.registerRequestResponseListener(CreateUserEvent.class, CreateUserEvent.class, request -> {
+//        	
+//        	boolean addedNewUser = server.getUsersLogins().add(request.userName);
+//    		if (addedNewUser) {
+//    			return new CreateUserEvent(request.userName);
+//    		} else {
+//    			return new CreateUserEvent("Failed"); //TODO: what to do if failed???
+//    		}
+//        });
         
         String userName = "Tomasz_Test";
         CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
