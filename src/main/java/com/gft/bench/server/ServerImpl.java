@@ -11,6 +11,7 @@ import javax.jms.JMSException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gft.bench.endpoints.NotificationHandler;
 import com.gft.bench.endpoints.RequestHandler;
 import com.gft.bench.endpoints.ServerEndpoint;
 import com.gft.bench.events.ChatEventListener;
@@ -39,11 +40,6 @@ public class ServerImpl implements Server, ChatEventListener {
 
     public ServerImpl(ServerEndpoint serverEndpoint) throws ChatException {
         this.serverEndpoint = serverEndpoint;
-        //this.chatEndpoint.setEventListeners(this); 
-        
-        //registerListener(CreateUserEvent.class, new CreateUserListener());
-        //registerListener(RoomChangedEvent.class, new RoomChangedListener());
-        //registerListener(ChatMessageEvent.class, new ChatMessageListener());
     }
 
     
@@ -54,11 +50,21 @@ public class ServerImpl implements Server, ChatEventListener {
     	serverEndpoint.registerRequestResponseListener(tRequest, tResponse, handler);
     }
     
+    @Override
+	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
+		
+    	serverEndpoint.registerNotificationListener(clazz, handler);
+    }
     
     @Override
-	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
-		eventListeners.put(clazz, listener);
-	}
+	public <T extends Serializable> void sendNotification(T request) {
+    	serverEndpoint.sendNotification(request);
+    }
+    
+//    @Override
+//	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
+//		eventListeners.put(clazz, listener);
+//	}
 	
 	@Override
 	public <T> void notifyListeners(Class<T> clazz, T event) { //TODO: ??? make it static, then no need to set this class instance in endpoint ?
@@ -168,7 +174,8 @@ public class ServerImpl implements Server, ChatEventListener {
     	}
     }
     
-    private String formatRoomHistory(LinkedList<String> roomHistory) {
+    @Override
+    public String formatRoomHistory(LinkedList<String> roomHistory) {
 
     	StringBuffer history = new StringBuffer();
     	for (String str : roomHistory) {

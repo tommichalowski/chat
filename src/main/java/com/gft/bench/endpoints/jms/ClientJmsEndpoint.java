@@ -66,7 +66,7 @@ public class ClientJmsEndpoint implements ClientEndpoint {
 		log.info("\n\nClient registerNotificationListener method, clazz name: " + clazz.getName());
 		try {		
 			JmsEndpointUtils.registerNotificationHandler(clazz, handler, notificationHandlers);
-			JmsEndpointUtils.defineNotificationListener(clazz, messageListeners, notificationHandlers); //TODO: where to put it
+			JmsEndpointUtils.defineNotificationListener(clazz, messageListeners, notificationHandlers);
 			JmsEndpointUtils.getMessageReceiver(clazz, clientReceivers, messageListeners, session, DestinationType.CLIENT); 
 		} catch (JMSException e) {
 			log.error("Client registerNotificationListener Message listener lambda error", e);

@@ -20,16 +20,16 @@ public class JmsRoomChangedListener implements MessageListener {
 	@Override
     public void onMessage(Message message) {
 
-		try {
-			if (message instanceof TextMessage) {
-				TextMessage textMsg = (TextMessage) message;
-				RoomChangedEvent event = new RoomChangedEvent(textMsg.getText());
-
-				log.info("JmsRoomChangedListener, room: " + event.room);
-				chatEventListener.notifyListeners(RoomChangedEvent.class, event);
-			}
-		} catch (JMSException e) {
-			log.warn("JmsRoomChangedListener received message of NOT TextMessage type!");
-		}
+//		try {
+//			if (message instanceof TextMessage) {
+//				TextMessage textMsg = (TextMessage) message;
+//				RoomChangedEvent event = new RoomChangedEvent(textMsg.getText());
+//
+//				log.info("JmsRoomChangedListener, room: " + event.room);
+//				chatEventListener.notifyListeners(RoomChangedEvent.class, event);
+//			}
+//		} catch (JMSException e) {
+//			log.warn("JmsRoomChangedListener received message of NOT TextMessage type!");
+//		}
     }
 }

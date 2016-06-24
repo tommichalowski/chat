@@ -26,6 +26,7 @@ import com.gft.bench.it.dto.SampleClass;
 
 public class JmsEndpointsIT {
 
+	@SuppressWarnings("unused")
 	private static final Log log = LogFactory.getLog(JmsEndpointsIT.class);
     private static final String BROKER_URL = "tcp://localhost:62618";
     private ArrayList<AutoCloseable> disposables;   
@@ -64,15 +65,17 @@ public class JmsEndpointsIT {
     	startInMemoryBroker();
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+    	disposables.add(() -> serverEndpoint.cleanup());
     	serverEndpoint.<AddRequest, AddResponse>registerRequestResponseListener(AddRequest.class, AddResponse.class,
     		request -> {
-    			log.info("\n\n\nINNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\n\n\n");
 	    		AddResponse response = new AddResponse();
 	    		response.z = request.x + request.y;
 	    		return response;
     	});
     	
+    	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+    	disposables.add(() -> clientEndpoint.cleanup());
     	AddRequest request = new AddRequest();
     	request.x = 5;
     	request.y = 3;
@@ -90,11 +93,13 @@ public class JmsEndpointsIT {
     	CountDownLatch latch = new CountDownLatch(1);
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+    	disposables.add(() -> serverEndpoint.cleanup());
     	serverEndpoint.registerNotificationListener(SampleClass.class, notification -> {
     		latch.countDown();
     	});
     	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+    	disposables.add(() -> clientEndpoint.cleanup());
     	SampleClass sampleClass = new SampleClass("Movies");
     	clientEndpoint.sendNotification(sampleClass);
 
@@ -110,11 +115,13 @@ public class JmsEndpointsIT {
     	CountDownLatch latch = new CountDownLatch(1);
     	
     	ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+    	disposables.add(() -> clientEndpoint.cleanup());
     	clientEndpoint.registerNotificationListener(SampleClass.class, notification -> {
     		latch.countDown();
     	});
     	
     	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+    	disposables.add(() -> serverEndpoint.cleanup());
     	SampleClass sampleClass = new SampleClass("Movies");
     	serverEndpoint.sendNotification(sampleClass);
 

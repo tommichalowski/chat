@@ -25,6 +25,8 @@ public interface Server extends ChatEventListener {
 
 	LinkedList<String> addRoom(String room, String userName);
 	
+	String formatRoomHistory(LinkedList<String> roomHistory);
+	
 	void stopServer() throws ChatException;
 }
 

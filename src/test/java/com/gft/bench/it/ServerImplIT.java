@@ -1,6 +1,7 @@
 package com.gft.bench.it;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.endpoints.jms.ServerJmsEndpoint;
 import com.gft.bench.events.business.CreateUserEvent;
 import com.gft.bench.events.business.RoomChangedEvent;
+import com.gft.bench.events.business.RoomHistoryNotification;
 import com.gft.bench.events.handlers.CreateUserHandler;
 import com.gft.bench.server.Server;
 import com.gft.bench.server.ServerImpl;
@@ -66,7 +68,7 @@ public class ServerImplIT {
 
 
     @Test
-    public void createUserRequestResponseShouldSucceed() throws Exception {
+    public void createUserRequestShouldSucceed() throws Exception {
     	
     	startInMemoryBroker();
     	
@@ -92,34 +94,11 @@ public class ServerImplIT {
         
         String userName = "Tomasz_Test";
         CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
-        CreateUserEvent response = future.get(5, TimeUnit.SECONDS);
+        CreateUserEvent response = future.get(3, TimeUnit.SECONDS);
 
         Assert.assertEquals(userName, response.userName);
     }
-    
-    
-    //@Test
-    public void createUserShouldReturnSuccessStatus() throws Exception {
-    	
-    	startInMemoryBroker();
-    	
-    	ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-		Server server = new ServerImpl(serverEndpoint);
-		disposables.add(() -> server.stopServer());
         
-        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
-        disposables.add(() -> chatClient.stopClient());
-        
-        String userName = "Tomasz_Test";
-        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
-
-        CreateUserEvent result = future.get();
-
-        //Assert.assertEquals(RequestResult.SUCCESS, result.getResult());
-        //Assert.assertEquals("Should have responded with expected message.", userName, result.getUserName());
-    }
-    
     
     //@Test
     public void createUserShouldReturnErrorStatusDueToNotUniqueUserName() throws Exception {
@@ -134,19 +113,21 @@ public class ServerImplIT {
         ChatClient chatClient = new ChatClientImpl(clientEndpoint);
         disposables.add(() -> chatClient.stopClient());
         
-        String userName = "Tomasz_Test";
+        server.registerRequestResponseListener(CreateUserEvent.class, CreateUserEvent.class, new CreateUserHandler(server));
         
+        String userName = "Tomasz_Test";
         CompletableFuture<CreateUserEvent> futureUser1 = chatClient.createUser(userName);
-        futureUser1.get();
+        futureUser1.get(3, TimeUnit.SECONDS);
         
         CompletableFuture<CreateUserEvent> futureUser2 = chatClient.createUser(userName);
-        CreateUserEvent result2 = futureUser2.get();
+        CreateUserEvent result2 = futureUser2.get(3, TimeUnit.SECONDS);
 
+        Assert.assertEquals("Error", "TODO");
         //Assert.assertEquals(RequestResult.ERROR, result2.getResult());
     }
     
     
-    //@Test
+    @Test
     public void enteringToNewRoomShouldResultWithRoomChangedNotification() throws Exception {
 
     	startInMemoryBroker();
@@ -159,6 +140,49 @@ public class ServerImplIT {
         ChatClientImpl chatClient = Mockito.spy(new ChatClientImpl(clientEndpoint));
         disposables.add(() -> chatClient.stopClient());
 
+        server.registerRequestResponseListener(CreateUserEvent.class, CreateUserEvent.class, new CreateUserHandler(server));
+        server.registerNotificationListener(RoomChangedEvent.class, event -> { 
+        	synchronized (server.getUsersLogins()) { //added due to check if userName exist when creating room
+	    		if (server.getUsersLogins().contains(event.user)) {
+		            LinkedList<String> roomHistory = server.addRoom(event.room, event.user);
+		            RoomHistoryNotification roomChanded = new RoomHistoryNotification(server.formatRoomHistory(roomHistory));
+		            server.sendNotification(roomChanded);
+	    		}
+			}
+        });
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        chatClient.registerNotificationListener(RoomHistoryNotification.class, notification -> {
+    		latch.countDown();
+    	});
+        
+        String room = "Music";
+        String userName = "Tomek";
+        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
+        future.get(3, TimeUnit.SECONDS);
+        
+        chatClient.enterToRoom(userName, room);
+        
+        boolean success = latch.await(3, TimeUnit.SECONDS);
+    	Assert.assertTrue(success); 
+    	
+    	TimeUnit.SECONDS.sleep(1);
+    }
+    
+    
+    //@Test
+    public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
+
+    	startInMemoryBroker();
+    	
+        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
+        Server server = new ServerImpl(serverEndpoint);
+		disposables.add(() -> server.stopServer());
+		
+        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
+        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
+        disposables.add(() -> chatClient.stopClient());
+        
         CountDownLatch latch = new CountDownLatch(1);
         clientEndpoint.registerNotificationListener(RoomChangedEvent.class, notification -> {
     		log.info("\n\nAction on client received RoomChangedEvent.class\n\n");
@@ -167,41 +191,10 @@ public class ServerImplIT {
         
         String room = "Music";
         String userName = "Ania";
-        CompletableFuture<CreateUserEvent> future = chatClient.createUser(userName);
-        future.get();
-        
         chatClient.enterToRoom(userName, room);
         
         boolean success = latch.await(3, TimeUnit.SECONDS);
-    	Assert.assertTrue(success); 
-    }
-    
-    
-    //@Test
-    public void enteringToNewRoomShouldResultWithErrorStatusWhenUserDoesntExist() throws Exception {
-
-	    	startInMemoryBroker();
-	    	
-	        ServerEndpoint serverEndpoint = new ServerJmsEndpoint(BROKER_URL);
-	        Server server = new ServerImpl(serverEndpoint);
-			disposables.add(() -> server.stopServer());
-			
-	        ClientEndpoint clientEndpoint = ClientEnpointFactory.getEndpoint(TransportLayer.JMS, BROKER_URL);
-	        ChatClient chatClient = new ChatClientImpl(clientEndpoint);
-	        disposables.add(() -> chatClient.stopClient());
-	        
-	        CountDownLatch latch = new CountDownLatch(1);
-	        clientEndpoint.registerNotificationListener(RoomChangedEvent.class, notification -> {
-        		log.info("\n\nAction on client received RoomChangedEvent.class\n\n");
-        		latch.countDown();
-        	});
-	        
-	        String room = "Music";
-	        String userName = "Ania";
-	        chatClient.enterToRoom(userName, room);
-	        
-	        boolean success = latch.await(3, TimeUnit.SECONDS);
-	    	Assert.assertTrue(success);  
+    	Assert.assertTrue(success);  
     }
 
 }

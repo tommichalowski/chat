@@ -1,5 +1,6 @@
 package com.gft.bench.client;
 
+import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -9,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gft.bench.endpoints.ClientEndpoint;
+import com.gft.bench.endpoints.NotificationHandler;
 import com.gft.bench.endpoints.TransportLayer;
 import com.gft.bench.events.ChatEventListener;
 import com.gft.bench.events.EventListener;
@@ -75,7 +77,7 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
 	
     @Override
     public void enterToRoom(String userName, String room) {
-    	RoomChangedEvent event = new RoomChangedEvent(room);
+    	RoomChangedEvent event = new RoomChangedEvent(userName, room);
     	clientEndpoint.sendNotification(event);
 	}
 	
@@ -86,10 +88,22 @@ public class ChatClientImpl implements ChatClient, ChatEventListener {
     }
     
 
-	@Override
-	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
-		eventListeners.put(clazz, listener);
-	}
+//	@Override
+//	public <T> void registerListener(Class<T> clazz, EventListener<T> listener) {
+//		eventListeners.put(clazz, listener);
+//	}
+    
+    @Override
+	public <T extends Serializable> void registerNotificationListener(Class<T> clazz, NotificationHandler<T> handler) {
+		
+    	clientEndpoint.registerNotificationListener(clazz, handler);
+    }
+    
+    @Override
+	public <T extends Serializable> void sendNotification(T request) {
+    	clientEndpoint.sendNotification(request);
+    }
+    
 	
 	@Override
 	public <T> void notifyListeners(Class<T> clazz, T event) { //TODO: ??? make it static, then no need to set this class instance in endpoint ?
